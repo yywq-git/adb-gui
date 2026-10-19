@@ -264,6 +264,22 @@ export const BACKEND_ERROR_PARAMS = {
   "metrics.stopFailed": { session: "number" },
   "metrics.rejected": { session: "number" },
   "clipboard.invalidImageDimensions": {},
+  "mirror.notFound": {},
+  "mirror.customPathInvalid": { path: "string" },
+  "mirror.versionUnreadable": {},
+  "mirror.versionTimeout": {},
+  "mirror.tooOld": { version: "string", minimum: "string" },
+  "mirror.extraArgsUnclosedQuote": {},
+  "mirror.extraArgsForbidden": { option: "string" },
+  "mirror.startFailed": {},
+  "mirror.alreadyRunning": {},
+  "mirror.shuttingDown": {},
+  "mirror.exitFailed": { code: "number" },
+  "mirror.disconnected": {},
+  "mirror.terminated": {},
+  "mirror.waitFailed": {},
+  "mirror.stopFailed": {},
+  "mirror.stopAllFailed": { failed: "number", total: "number" },
 } as const;
 
 export type BackendErrorCode = keyof typeof BACKEND_ERROR_PARAMS;

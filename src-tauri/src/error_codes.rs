@@ -204,6 +204,22 @@ pub const METRICS_STOP_FAILED: &str = "metrics.stopFailed";
 pub const METRICS_SUPERSEDED: &str = "metrics.superseded";
 pub const METRICS_WAIT_FAILED: &str = "metrics.waitFailed";
 pub const METRICS_WAIT_TIMEOUT: &str = "metrics.waitTimeout";
+pub const MIRROR_ALREADY_RUNNING: &str = "mirror.alreadyRunning";
+pub const MIRROR_CUSTOM_PATH_INVALID: &str = "mirror.customPathInvalid";
+pub const MIRROR_DISCONNECTED: &str = "mirror.disconnected";
+pub const MIRROR_EXIT_FAILED: &str = "mirror.exitFailed";
+pub const MIRROR_EXTRA_ARGS_FORBIDDEN: &str = "mirror.extraArgsForbidden";
+pub const MIRROR_EXTRA_ARGS_UNCLOSED_QUOTE: &str = "mirror.extraArgsUnclosedQuote";
+pub const MIRROR_NOT_FOUND: &str = "mirror.notFound";
+pub const MIRROR_SHUTTING_DOWN: &str = "mirror.shuttingDown";
+pub const MIRROR_START_FAILED: &str = "mirror.startFailed";
+pub const MIRROR_STOP_ALL_FAILED: &str = "mirror.stopAllFailed";
+pub const MIRROR_STOP_FAILED: &str = "mirror.stopFailed";
+pub const MIRROR_TERMINATED: &str = "mirror.terminated";
+pub const MIRROR_TOO_OLD: &str = "mirror.tooOld";
+pub const MIRROR_VERSION_TIMEOUT: &str = "mirror.versionTimeout";
+pub const MIRROR_VERSION_UNREADABLE: &str = "mirror.versionUnreadable";
+pub const MIRROR_WAIT_FAILED: &str = "mirror.waitFailed";
 pub const PORTS_INVALID_DIRECTION: &str = "ports.invalidDirection";
 pub const PORTS_INVALID_PORT: &str = "ports.invalidPort";
 pub const RECORDING_BUSY: &str = "recording.busy";
@@ -467,6 +483,22 @@ pub const ALL: &[&str] = &[
     METRICS_SUPERSEDED,
     METRICS_WAIT_FAILED,
     METRICS_WAIT_TIMEOUT,
+    MIRROR_ALREADY_RUNNING,
+    MIRROR_CUSTOM_PATH_INVALID,
+    MIRROR_DISCONNECTED,
+    MIRROR_EXIT_FAILED,
+    MIRROR_EXTRA_ARGS_FORBIDDEN,
+    MIRROR_EXTRA_ARGS_UNCLOSED_QUOTE,
+    MIRROR_NOT_FOUND,
+    MIRROR_SHUTTING_DOWN,
+    MIRROR_START_FAILED,
+    MIRROR_STOP_ALL_FAILED,
+    MIRROR_STOP_FAILED,
+    MIRROR_TERMINATED,
+    MIRROR_TOO_OLD,
+    MIRROR_VERSION_TIMEOUT,
+    MIRROR_VERSION_UNREADABLE,
+    MIRROR_WAIT_FAILED,
     PORTS_INVALID_DIRECTION,
     PORTS_INVALID_PORT,
     RECORDING_BUSY,

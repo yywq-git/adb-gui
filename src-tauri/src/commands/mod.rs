@@ -14,6 +14,7 @@ pub mod device_metrics;
 pub mod image_file;
 pub mod keys;
 pub mod logcat;
+pub mod mirror;
 pub mod packages;
 pub mod port_forward;
 pub mod screen_record;
