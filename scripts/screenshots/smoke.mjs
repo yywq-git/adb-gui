@@ -166,6 +166,132 @@ async function bookmarkPopoverFocus(browser) {
   } finally { await context.close(); }
 }
 
+const AUTO_PUSH_TEXT = {
+  en: {
+    module: "Push to phone automatically",
+    row: "Push clipboard to phone automatically",
+    watching: "Watching the computer clipboard",
+    pushed: "Pushed · ",
+    locked: "Not pushed: The phone is locked. Unlock it and try again",
+    tooLarge: "The last copy exceeds 256 KiB; nothing was pushed",
+    unsupported: "Automatic push is not supported on this platform",
+    rowUnsupported: "Not supported on this platform",
+    reset: "Restore defaults",
+  },
+  "zh-CN": {
+    module: "自动推送到手机",
+    row: "自动推送剪贴板到手机",
+    watching: "正在监听电脑剪贴板",
+    pushed: "已推送 · ",
+    locked: "未推送: 手机已锁屏, 请解锁后重试",
+    tooLarge: "最近一次复制超过 256 KiB, 未推送",
+    unsupported: "当前平台暂不支持自动推送",
+    rowUnsupported: "当前平台暂不支持",
+    reset: "恢复默认",
+  },
+};
+
+async function autoPushContext(browser, locale, theme, viewport, supported = true) {
+  const context = await browser.newContext({ locale, viewport, colorScheme: theme, reducedMotion: "reduce" });
+  await context.addInitScript({ path: MOCK_SCRIPT });
+  await context.addInitScript(({ locale, theme, ui, supported }) => {
+    localStorage.setItem("locale", locale);
+    localStorage.setItem("theme", theme);
+    localStorage.setItem("adb-gui-ui", ui);
+    window.__ADB_GUI_MOCK_CLIPBOARD_AUTO_PUSH.supported = supported;
+  }, { locale, theme, ui: uiPreferences("tools", false, 240), supported });
+  return context;
+}
+
+function autoPushStatus(page, text) {
+  return page.locator('[role="status"][aria-live="polite"]').filter({ hasText: text });
+}
+
+// Rust emits the status events; the mock stands in for it with the generation it returned.
+async function emitAutoPush(page, status, generationOffset = 0) {
+  await page.evaluate(({ status, generationOffset }) => {
+    const generation = window.__ADB_GUI_MOCK_CLIPBOARD_AUTO_PUSH.generation + generationOffset;
+    window.__ADB_GUI_MOCK_EMIT("clipboard-auto-push", { generation, at: Date.now(), ...status });
+  }, { status, generationOffset });
+}
+
+async function clipboardAutoPush(browser, locale, theme, viewport) {
+  const label = `auto push ${locale}/${theme}/${viewport.width}x${viewport.height}`;
+  const text = AUTO_PUSH_TEXT[locale];
+  const context = await autoPushContext(browser, locale, theme, viewport);
+  const page = await context.newPage();
+  await page.clock.setFixedTime(SNAPSHOT_TIME);
+  const errors = [];
+  page.on("pageerror", error => errors.push(error.message));
+  const target = () => page.evaluate(() => window.__ADB_GUI_MOCK_CLIPBOARD_AUTO_PUSH.target);
+  const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem("adb-gui-settings") ?? "null")?.settings?.clipboard?.autoPush ?? null);
+  try {
+    await page.goto(APP_URL);
+    await page.getByText("Pixel 7", { exact: true }).first().waitFor();
+    const moduleSwitch = page.getByRole("switch", { name: text.module, exact: true });
+    assert.equal(await moduleSwitch.getAttribute("aria-checked"), "false", `${label}: off by default`);
+    assert.equal(await target(), null, `${label}: no target while off`);
+
+    // The whole row toggles, not only the switch.
+    await page.getByText(text.module, { exact: true }).click();
+    assert.equal(await moduleSwitch.getAttribute("aria-checked"), "true", `${label}: row click turns it on`);
+    assert.equal(await stored(), true, `${label}: switch persists to settings`);
+    await autoPushStatus(page, text.watching).waitFor();
+    assert.equal((await target())?.serial, "9A271FFAZ004TR", `${label}: target is the selected device`);
+
+    await emitAutoPush(page, { kind: "pushed" });
+    const time = await page.evaluate(locale => new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(Date.now()), locale);
+    await autoPushStatus(page, `${text.pushed}${time}`).waitFor();
+    await emitAutoPush(page, { kind: "failed", error: { code: "clipboard.locked" } });
+    await autoPushStatus(page, text.locked).waitFor();
+    assert.equal(await page.locator('[role="alert"]').filter({ hasText: text.locked }).count(), 0, `${label}: failure must not toast`);
+    await layout(page, `${label}/locked`);
+    await emitAutoPush(page, { kind: "skipped", reason: "too_large" });
+    await autoPushStatus(page, text.tooLarge).waitFor();
+    await emitAutoPush(page, { kind: "pushed" }, -1);
+    await page.waitForTimeout(50);
+    assert.equal(await autoPushStatus(page, text.tooLarge).count(), 1, `${label}: stale generation ignored`);
+    await layout(page, `${label}/too-large`);
+
+    await settings(page);
+    await page.locator("#settings-nav-general").click();
+    const rowSwitch = page.getByRole("switch", { name: new RegExp(`^${text.row}`) });
+    assert.equal(await rowSwitch.getAttribute("aria-checked"), "true", `${label}: settings row follows the module`);
+    await layout(page, `${label}/settings`);
+    await rowSwitch.click();
+    assert.equal(await rowSwitch.getAttribute("aria-checked"), "false");
+    await rowSwitch.click();
+    await page.locator("#settings-section-general").getByRole("button", { name: text.reset, exact: true }).click();
+    assert.equal(await rowSwitch.getAttribute("aria-checked"), "false", `${label}: section reset turns it off`);
+    await closeSettings(page);
+    assert.equal(await moduleSwitch.getAttribute("aria-checked"), "false", `${label}: module follows the settings row`);
+    assert.equal(await stored(), false);
+    await page.waitForFunction(() => window.__ADB_GUI_MOCK_CLIPBOARD_AUTO_PUSH.target === null);
+    assert.deepEqual(errors, [], `${label}: browser errors`);
+    console.log(`passed ${label}: switch, status line, settings sync and reset`);
+  } finally { await context.close(); }
+}
+
+async function clipboardAutoPushUnsupported(browser, locale, theme, viewport) {
+  const label = `auto push unsupported ${locale}/${theme}/${viewport.width}x${viewport.height}`;
+  const text = AUTO_PUSH_TEXT[locale];
+  const context = await autoPushContext(browser, locale, theme, viewport, false);
+  const page = await context.newPage();
+  try {
+    await page.goto(APP_URL);
+    await page.getByText("Pixel 7", { exact: true }).first().waitFor();
+    await autoPushStatus(page, text.unsupported).waitFor();
+    assert(await page.getByRole("switch", { name: text.module, exact: true }).isDisabled(), `${label}: module switch disabled`);
+    await layout(page, label);
+    await settings(page);
+    await page.locator("#settings-nav-general").click();
+    const rowSwitch = page.getByRole("switch", { name: new RegExp(`^${text.row}`) });
+    assert(await rowSwitch.isDisabled(), `${label}: settings row disabled`);
+    await page.locator("#settings-section-general").getByText(text.rowUnsupported, { exact: true }).waitFor();
+    console.log(`passed ${label}: both switches disabled with the reason`);
+  } finally { await context.close(); }
+}
+
 const server = await startDevServer();
 const browser = await chromium.launch();
 try {
@@ -179,6 +305,13 @@ try {
   for (const [system, expected] of [["zh-TW", "zh-CN"], ["en-US", "en"], ["ja-JP", "en"]]) await systemLocale(browser, system, expected);
   await retainedState(browser);
   await bookmarkPopoverFocus(browser);
+  for (const theme of ["light", "dark"]) {
+    for (const viewport of [{ width: 900, height: 600 }, { width: 1200, height: 800 }]) {
+      for (const locale of ["en", "zh-CN"]) await clipboardAutoPush(browser, locale, theme, viewport);
+    }
+  }
+  await clipboardAutoPushUnsupported(browser, "en", "light", { width: 900, height: 600 });
+  await clipboardAutoPushUnsupported(browser, "zh-CN", "dark", { width: 1200, height: 800 });
 } finally {
   await browser.close();
   server.kill("SIGTERM");
