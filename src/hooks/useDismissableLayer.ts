@@ -11,6 +11,15 @@ export function useDismissableLayer(
   triggerRef: RefObject<HTMLElement | null>,
   onClose: () => void,
 ): void {
+  // WebKit (the macOS webview) does not focus a clicked button, so a
+  // mouse-opened surface would leave focus on <body> where its arrow keys and
+  // Tab order never reach it. Anchor focus on the trigger, as Chromium does.
+  useEffect(() => {
+    if (open && !rootRef.current?.contains(document.activeElement)) {
+      triggerRef.current?.focus();
+    }
+  }, [open, rootRef, triggerRef]);
+
   useEffect(() => {
     if (!open) {
       return;

@@ -121,6 +121,51 @@ async function retainedState(browser) {
   } finally { await context.close(); }
 }
 
+// WebKit (the macOS webview) does not focus a clicked button. A dispatched click
+// does the same in Chromium, so this reproduces a mouse-opened bookmark popover.
+async function bookmarkPopoverFocus(browser) {
+  const context = await browser.newContext({ locale: "en-US" });
+  await context.addInitScript({ path: MOCK_SCRIPT });
+  await context.addInitScript(({ ui, bookmarks }) => {
+    localStorage.setItem("locale", "en");
+    localStorage.setItem("adb-gui-ui", ui);
+    localStorage.setItem("adb-gui-file-bookmarks", bookmarks);
+  }, {
+    ui: uiPreferences("files", false, 240),
+    bookmarks: JSON.stringify({
+      state: { bookmarks: [{ path: "/sdcard", color: null }, { path: "/sdcard/DCIM", color: "blue" }, { path: "/sdcard/Download", color: null }] },
+      version: 1,
+    }),
+  });
+  const page = await context.newPage();
+  const focused = () => page.evaluate(() => {
+    const element = document.activeElement;
+    return { label: element?.getAttribute("aria-label"), title: element?.getAttribute("title"), role: element?.getAttribute("role") };
+  });
+  try {
+    await page.goto(APP_URL);
+    await page.getByText("DCIM", { exact: true }).first().waitFor();
+
+    const menu = page.getByRole("button", { name: "Bookmarks", exact: true });
+    await menu.dispatchEvent("click");
+    await page.getByRole("dialog", { name: "Bookmarks" }).waitFor();
+    assert.equal((await focused()).label, "Bookmarks", "mouse-opened list keeps focus on its trigger");
+    await page.keyboard.press("ArrowDown");
+    assert.equal((await focused()).title, "/sdcard", "ArrowDown reaches the first bookmark");
+    await page.keyboard.press("End");
+    assert.equal((await focused()).title, "/sdcard/Download", "End reaches the last bookmark");
+    await page.keyboard.press("Escape");
+    assert.equal((await focused()).label, "Bookmarks", "Escape returns focus to the trigger");
+
+    await page.getByRole("button", { name: "Edit bookmark", exact: true }).dispatchEvent("click");
+    await page.getByRole("dialog", { name: "Bookmark /sdcard" }).waitFor();
+    await page.keyboard.press("Tab");
+    const swatch = await focused();
+    assert.deepEqual([swatch.role, swatch.label], ["radio", "No color"], "Tab moves from the star into the editor");
+    console.log("passed mouse-opened bookmark popovers keep keyboard focus");
+  } finally { await context.close(); }
+}
+
 const server = await startDevServer();
 const browser = await chromium.launch();
 try {
@@ -133,6 +178,7 @@ try {
   }
   for (const [system, expected] of [["zh-TW", "zh-CN"], ["en-US", "en"], ["ja-JP", "en"]]) await systemLocale(browser, system, expected);
   await retainedState(browser);
+  await bookmarkPopoverFocus(browser);
 } finally {
   await browser.close();
   server.kill("SIGTERM");
