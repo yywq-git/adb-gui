@@ -16,6 +16,9 @@ async function layout(page, context) {
       .map(element => ({ id: element.id, text: element.textContent?.slice(0, 100), width: element.clientWidth, scroll: element.scrollWidth }));
   });
   assert.deepEqual(overflow, [], `${context}: horizontal overflow`);
+  const vertical = await page.evaluate(() => ({ height: innerHeight, scroll: document.documentElement.scrollHeight }));
+  assert(vertical.scroll <= vertical.height + 2,
+    `${context}: vertical document overflow (scrollHeight ${vertical.scroll} > innerHeight ${vertical.height})`);
 }
 
 async function settings(page) {
