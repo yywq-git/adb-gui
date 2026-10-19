@@ -89,6 +89,18 @@ async fn run(
     text: Option<&str>,
 ) -> Result<ClipboardResult, AppError> {
     let request = encode_request(text)?;
+    let helper = prepare(app, serial).await?;
+    submit(helper, &request, text.is_some()).await
+}
+
+/// A deployed helper with its adb command assembled but not started yet.
+pub(crate) struct PreparedHelper {
+    command: tokio::process::Command,
+}
+
+/// Publishes the DEX and assembles the helper command. Nothing reaches the
+/// device clipboard here, so a caller may still abandon the operation.
+pub(crate) async fn prepare(app: &AppHandle, serial: &str) -> Result<PreparedHelper, AppError> {
     let local = device_helper::resolve_app_info_dex_path(app)?;
     let dex = std::fs::read(&local).map_err(|error| {
         AppError::new(codes::CLIPBOARD_READ_DEX_FAILED).detail(error.to_string())
@@ -108,18 +120,22 @@ async fn run(
         "none",
         &helper_command(&remote),
     ]);
+    Ok(PreparedHelper { command })
+}
+
+/// Starts the helper before its first await, so a caller that checks its
+/// context immediately before calling this submits nothing stale.
+pub(crate) async fn submit(
+    mut helper: PreparedHelper,
+    request: &[u8],
+    writing: bool,
+) -> Result<ClipboardResult, AppError> {
     let result = async {
-        let (success, stdout) = exchange(&mut command, &request, HOST_TIMEOUT).await?;
-        parse_response(&stdout, success, text.is_some())
+        let (success, stdout) = exchange(&mut helper.command, request, HOST_TIMEOUT).await?;
+        parse_response(&stdout, success, writing)
     }
     .await;
-    result.map_err(|error| {
-        if text.is_some() {
-            write_failure(error)
-        } else {
-            error
-        }
-    })
+    result.map_err(|error| if writing { write_failure(error) } else { error })
 }
 
 // A submitted set may already have changed the device even if its response is
