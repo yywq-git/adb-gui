@@ -3,7 +3,20 @@ import { chromium } from "playwright";
 import { startDevServer, APP_URL, MOCK_SCRIPT, SNAPSHOT_TIME, uiPreferences } from "./capture.mjs";
 
 const PANES = ["tools", "apps", "files", "codegen", "decoder", "perf"];
-const SECTIONS = ["general", "logcat", "capture", "files", "apps", "codegen"];
+const SECTIONS = ["general", "logcat", "capture", "mirror", "files", "apps", "codegen"];
+const MIRROR_SERIAL = "9A271FFAZ004TR";
+const MIRROR_TEXT = {
+  en: {
+    start: "Start mirroring", stop: "Stop mirroring", running: "Mirroring · Pixel 7", failed: "Failed to start:",
+    disconnected: "Device disconnected", notFound: "scrcpy not found", tooOld: "scrcpy 1.21 is too old",
+    pathInvalid: "Invalid scrcpy path", rows: ["scrcpy", "Quality", "Options", "Extra arguments"], reset: "Restore defaults",
+  },
+  "zh-CN": {
+    start: "开始投屏", stop: "停止投屏", running: "投屏中 · Pixel 7", failed: "启动失败:",
+    disconnected: "设备已断开", notFound: "未找到 scrcpy", tooOld: "scrcpy 1.21 过旧",
+    pathInvalid: "scrcpy 路径无效", rows: ["scrcpy", "画质", "选项", "额外参数"], reset: "恢复默认",
+  },
+};
 
 async function layout(page, context) {
   const overflow = await page.evaluate(() => {
@@ -76,10 +89,92 @@ async function matrixCase(browser, locale, theme, viewport) {
     await page.reload();
     assert.equal(await page.locator("html").getAttribute("lang"), next, `${label}: locale did not persist`);
     assert.deepEqual(errors, [], `${label}: browser errors`);
-    console.log(`passed ${label}: six workspaces, six settings sections, menu, switch and reload`);
+    console.log(`passed ${label}: six workspaces, seven settings sections, menu, switch and reload`);
   } finally {
     await context.close();
   }
+}
+
+async function mirrorPage(browser, locale, theme, viewport, scrcpy) {
+  const context = await browser.newContext({ locale, viewport, colorScheme: theme, reducedMotion: "reduce" });
+  await context.addInitScript({ path: MOCK_SCRIPT });
+  await context.addInitScript(({ locale, theme, ui, scrcpy }) => {
+    localStorage.setItem("locale", locale);
+    localStorage.setItem("theme", theme);
+    localStorage.setItem("adb-gui-ui", ui);
+    window.__ADB_GUI_MOCK_SCRCPY = scrcpy;
+  }, { locale, theme, ui: uiPreferences("tools", false, 240), scrcpy });
+  const page = await context.newPage();
+  await page.clock.setFixedTime(SNAPSHOT_TIME);
+  const errors = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto(APP_URL);
+  await page.getByText("Pixel 7", { exact: true }).first().waitFor();
+  const module = page.locator("#tool-grid > section").filter({ hasText: "A-10" }).first();
+  await module.scrollIntoViewIfNeeded();
+  // The header holds the drag handle; the start/stop button opens the body.
+  return { context, page, errors, module, status: module.locator('[role="status"]'), button: module.locator(":scope > div button").first() };
+}
+
+async function mirrorCase(browser, locale, theme, viewport) {
+  const label = `mirror ${locale}/${theme}/${viewport.width}x${viewport.height}`;
+  const text = MIRROR_TEXT[locale];
+  for (const scrcpy of ["notFound", "tooOld", "pathInvalid"]) {
+    const { context, page, errors, status, button } = await mirrorPage(browser, locale, theme, viewport, scrcpy);
+    try {
+      await status.getByText(text[scrcpy]).waitFor();
+      assert(await button.isDisabled(), `${label}/${scrcpy}: start stays disabled`);
+      await layout(page, `${label}/${scrcpy}`);
+      assert.deepEqual(errors, [], `${label}/${scrcpy}: browser errors`);
+    } finally { await context.close(); }
+  }
+
+  const { context, page, errors, status, button } = await mirrorPage(browser, locale, theme, viewport, "ready");
+  try {
+    const exit = (outcome) => page.evaluate(([serial, outcome]) => window.__ADB_GUI_MOCK_MIRROR_EXIT(serial, outcome), [MIRROR_SERIAL, outcome]);
+    await button.getByText(text.start).waitFor();
+    assert(await button.isEnabled(), `${label}: start is available`);
+    await button.click();
+    await button.getByText(text.stop).waitFor();
+    await status.getByText(text.running).waitFor();
+    await layout(page, `${label}/running`);
+
+    // A long scrcpy error wraps inside the module and keeps the retry button.
+    await exit("failed");
+    await status.getByText(text.failed).waitFor();
+    await button.getByText(text.start).waitFor();
+    assert(await button.isEnabled(), `${label}: start is the retry after a failure`);
+    await layout(page, `${label}/failed`);
+
+    await button.click();
+    await button.getByText(text.stop).waitFor();
+    await button.click();
+    await button.getByText(text.start).waitFor();
+    assert.equal((await status.innerText()).trim(), "", `${label}: a stop leaves no error`);
+
+    await button.click();
+    await button.getByText(text.stop).waitFor();
+    await exit("disconnected");
+    await status.getByText(text.disconnected).waitFor();
+
+    await settings(page);
+    await page.locator("#settings-nav-mirror").click();
+    await page.waitForTimeout(150);
+    assert.equal(await page.locator("#settings-nav-mirror").getAttribute("aria-current"), "true", `${label}: anchor index marks the mirror section`);
+    const section = page.locator("#settings-section-mirror");
+    for (const row of text.rows) await section.getByText(row, { exact: true }).first().waitFor();
+    assert.equal(await section.getByText("/opt/homebrew/bin/scrcpy").count(), 1, `${label}: detected path shown`);
+    const extra = section.getByRole("textbox");
+    await extra.fill("--max-fps=60 -s abc");
+    await section.locator('[role="alert"]').filter({ hasText: "-s" }).waitFor();
+    await layout(page, `${label}/settings/mirror`);
+    await section.getByRole("button", { name: text.reset }).click();
+    assert.equal(await extra.inputValue(), "", `${label}: section reset clears extra arguments`);
+    await section.locator('[role="alert"]').waitFor({ state: "detached" });
+    await closeSettings(page);
+    assert.deepEqual(errors, [], `${label}: browser errors`);
+    console.log(`passed ${label}: A-10 states, start/stop/exit and the mirror settings section`);
+  } finally { await context.close(); }
 }
 
 async function systemLocale(browser, system, expected) {
@@ -173,6 +268,13 @@ try {
     for (const theme of ["light", "dark"]) {
       for (const viewport of [{ width: 900, height: 600 }, { width: 1400, height: 880 }]) {
         await matrixCase(browser, locale, theme, viewport);
+      }
+    }
+  }
+  for (const locale of ["en", "zh-CN"]) {
+    for (const theme of ["light", "dark"]) {
+      for (const viewport of [{ width: 900, height: 600 }, { width: 1200, height: 800 }]) {
+        await mirrorCase(browser, locale, theme, viewport);
       }
     }
   }

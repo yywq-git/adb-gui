@@ -449,7 +449,77 @@
     store.delete(sessionId);
   }
 
+  // scrcpy launcher. Smoke tests pick the detection result through
+  // window.__ADB_GUI_MOCK_SCRCPY ("ready", "notFound", "tooOld", "pathInvalid")
+  // and push exits with window.__ADB_GUI_MOCK_MIRROR_EXIT(serial, outcome).
+  const mirrorSessions = new Map();
+  const MIRROR_FAILURES = {
+    notFound: () => ({ code: "mirror.notFound" }),
+    tooOld: () => ({ code: "mirror.tooOld", params: { version: "1.21", minimum: "2.0" } }),
+    pathInvalid: (path) => ({ code: "mirror.customPathInvalid", params: { path: path ?? "/Applications/scrcpy" } }),
+  };
+
+  function detectScrcpy(customPath) {
+    const failure = MIRROR_FAILURES[window.__ADB_GUI_MOCK_SCRCPY ?? "ready"];
+    if (failure) throw failure(customPath);
+    return customPath === null
+      ? { path: "/opt/homebrew/bin/scrcpy", version: "5.0.1", source: "known" }
+      : { path: customPath, version: "5.0.1", source: "custom" };
+  }
+
+  // Only enough of the Rust parser to exercise the settings row in a browser.
+  function parseExtraArgs(text) {
+    if ((text.match(/"/g) ?? []).length % 2 || (text.match(/'/g) ?? []).length % 2) {
+      throw { code: "mirror.extraArgsUnclosedQuote" };
+    }
+    const args = text.split(/\s+/).filter(Boolean);
+    const forbidden = args.find((arg) => /^(-[sde]|--(serial|select-usb|select-tcpip|tcpip|otg))(=|$)/.test(arg));
+    if (forbidden) throw { code: "mirror.extraArgsForbidden", params: { option: forbidden.split("=")[0] } };
+    return args;
+  }
+
+  function mirrorExit(serial, outcome, error = null) {
+    const sessionId = mirrorSessions.get(serial);
+    if (sessionId === undefined) return;
+    mirrorSessions.delete(serial);
+    emit("mirror-exit", { serial, session_id: sessionId, outcome, error });
+  }
+
+  window.__ADB_GUI_MOCK_MIRROR_EXIT = (serial, outcome) => mirrorExit(
+    serial,
+    outcome,
+    outcome === "disconnected"
+      ? { code: "mirror.disconnected" }
+      : outcome === "failed"
+        ? { code: "mirror.exitFailed", params: { code: 1 }, detail: "Could not open video stream: the device screen was turned off while starting and the encoder stopped" }
+        : null,
+  );
+
+  function startMirror(serial, request) {
+    if (mirrorSessions.has(serial)) throw { code: "mirror.alreadyRunning" };
+    parseExtraArgs(request.extraArgs);
+    detectScrcpy(request.scrcpyPath);
+    const sessionId = nextSessionId++;
+    mirrorSessions.set(serial, sessionId);
+    if (request.extraArgs.includes("--bogus")) {
+      setTimeout(() => mirrorExit(serial, "failed", {
+        code: "mirror.exitFailed",
+        params: { code: 1 },
+        detail: "scrcpy: unrecognized option '--bogus'",
+      }), 120);
+    }
+    return { serial, session_id: sessionId };
+  }
+
   const COMMANDS = {
+    detect_scrcpy: ({ customPath }) => detectScrcpy(customPath),
+    parse_scrcpy_extra_args: ({ text }) => parseExtraArgs(text),
+    start_mirror: ({ serial, request }) => startMirror(serial, request),
+    stop_mirror: ({ serial, sessionId }) => {
+      if (mirrorSessions.get(serial) === sessionId) setTimeout(() => mirrorExit(serial, "stopped"), 30);
+      return null;
+    },
+    list_mirror_sessions: () => [...mirrorSessions].map(([serial, session_id]) => ({ serial, session_id })),
     resolve_capture_directory: ({ destination }) => destination.kind === "directory" ? destination.path : "/Users/dev/Downloads",
     get_adb_info: () => ({
       path: "/Users/dev/Library/Android/sdk/platform-tools/adb",
@@ -544,7 +614,12 @@
     if (!handler) {
       return Promise.reject({ code: "unknown", detail: `Unhandled documentation mock command: ${cmd}` });
     }
-    return Promise.resolve(handler(args));
+    try {
+      return Promise.resolve(handler(args));
+    } catch (error) {
+      // Handlers throw native error payloads the way a rejected command would.
+      return Promise.reject(error);
+    }
   }
 
   window.isTauri = true;
