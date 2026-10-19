@@ -15,6 +15,22 @@ import { useClipboardAutoPushStore } from "@/store/clipboardAutoPush";
 import { useDeviceStore } from "@/store/device";
 import { useSettingsStore } from "@/store/settings";
 
+/** The switch shared by the clipboard module and the General settings row. */
+export function useClipboardAutoPushControl() {
+  const tauri = isTauriRuntime();
+  const supported = useClipboardAutoPushStore((s) => s.supported);
+  const available = useSettingsStore((s) => s.available);
+  const checked = useSettingsStore((s) => s.preferences.clipboard.autoPush);
+  const update = useSettingsStore((s) => s.update);
+  return {
+    checked,
+    // An offline device leaves the switch usable; the status line explains the wait.
+    disabled: !tauri || supported === false || !available,
+    unsupported: supported === false,
+    setChecked: (autoPush: boolean) => update("clipboard", { autoPush }),
+  };
+}
+
 // Mounted at the App root: the switch applies even while the Tools page or the
 // clipboard module is hidden. Rust does the watching and pushing.
 export function useClipboardAutoPush(): void {

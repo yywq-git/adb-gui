@@ -34,10 +34,13 @@ export function SettingRowLabel({
   id,
   labelId,
   className,
+  description,
 }: {
   id: string;
   labelId?: string;
   className?: string;
+  // Replaces the row's own description, e.g. to explain why it is disabled.
+  description?: string;
 }) {
   const t = useT();
   const row = findSettingsRow(id);
@@ -57,9 +60,9 @@ export function SettingRowLabel({
             {t.settings.dialog.modified}</span>
         )}
       </div>
-      {row.description && (
+      {(description ?? row.description) && (
         <span className="text-[11px] leading-snug text-ink2">
-          {row.description(t)}
+          {description ?? row.description?.(t)}
         </span>
       )}
     </div>
@@ -97,11 +100,13 @@ export function SettingSwitchRow({
   checked,
   onChange,
   disabled = false,
+  description,
 }: {
   id: string;
   checked: boolean;
   onChange: (value: boolean) => void;
   disabled?: boolean;
+  description?: string;
 }) {
   const controlId = useId();
   const labelId = `${controlId}-label`;
@@ -122,7 +127,7 @@ export function SettingSwitchRow({
         disabled ? "cursor-not-allowed" : "cursor-pointer",
       )}
     >
-      <SettingRowLabel id={id} labelId={labelId} />
+      <SettingRowLabel id={id} labelId={labelId} description={description} />
       <Switch
         id={controlId}
         checked={checked}

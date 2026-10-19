@@ -33,6 +33,11 @@ const uiState = vi.hoisted(() => ({
   resetToolOrder: () => {},
 }));
 
+// The clipboard switch also needs the desktop runtime; this file covers settings ownership.
+vi.mock("@/lib/tauri", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/tauri")>(),
+  isTauriRuntime: () => true,
+}));
 vi.mock("@/store/settings", () => ({
   useSettingsStore: (selector: (state: typeof settingsState) => unknown) =>
     selector(settingsState),
