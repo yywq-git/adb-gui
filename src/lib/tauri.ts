@@ -12,7 +12,12 @@ import { getCurrentWebview, type DragDropEvent } from "@tauri-apps/api/webview";
 import { SUPPORTED_IMAGE_EXTENSIONS } from "@/lib/codeDecoder";
 import { deviceDownloadDefaultName } from "@/lib/deviceFiles";
 import type { LogLevel } from "@/lib/logcat";
-import type { SaveBehavior, ScreenshotBehavior } from "@/lib/settings";
+import type {
+  MirrorOptions,
+  MirrorPreset,
+  SaveBehavior,
+  ScreenshotBehavior,
+} from "@/lib/settings";
 
 async function invoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   try { return await nativeInvoke<T>(command, args); }
@@ -158,6 +163,35 @@ export interface DeviceMetricsExit {
   session_id: number;
   reason: "eof" | "error";
   detail: AppErrorPayload | null;
+}
+
+export type ScrcpySource = "custom" | "path" | "known";
+
+export interface ScrcpyInfo {
+  path: string;
+  version: string;
+  source: ScrcpySource;
+}
+
+export interface MirrorRequest {
+  scrcpyPath: string | null;
+  preset: MirrorPreset;
+  options: MirrorOptions;
+  extraArgs: string;
+}
+
+export interface MirrorSessionInfo {
+  serial: string;
+  session_id: number;
+}
+
+export type MirrorOutcome = "closed" | "stopped" | "disconnected" | "failed";
+
+export interface MirrorExit {
+  serial: string;
+  session_id: number;
+  outcome: MirrorOutcome;
+  error: AppErrorPayload | null;
 }
 
 export interface ScreenshotResult {
@@ -614,6 +648,39 @@ export async function collectQuickBugReport(serial: string): Promise<QuickReport
 
 export async function collectFullBugreport(serial: string): Promise<BugreportResult> {
   return invoke<BugreportResult>("collect_full_bugreport", { serial });
+}
+
+export async function detectScrcpy(customPath: string | null): Promise<ScrcpyInfo> {
+  return invoke<ScrcpyInfo>("detect_scrcpy", { customPath });
+}
+
+export async function parseScrcpyExtraArgs(text: string): Promise<string[]> {
+  return invoke<string[]>("parse_scrcpy_extra_args", { text });
+}
+
+export async function startMirror(serial: string, request: MirrorRequest): Promise<MirrorSessionInfo> {
+  return invoke<MirrorSessionInfo>("start_mirror", { serial, request });
+}
+
+export async function stopMirror(serial: string, sessionId: number): Promise<void> {
+  return invoke<void>("stop_mirror", { serial, sessionId });
+}
+
+export async function listMirrorSessions(): Promise<MirrorSessionInfo[]> {
+  return invoke<MirrorSessionInfo[]>("list_mirror_sessions");
+}
+
+export async function onMirrorExit(callback: (exit: MirrorExit) => void): Promise<UnlistenFn> {
+  return listen<MirrorExit>("mirror-exit", (event) => callback(event.payload));
+}
+
+export async function pickScrcpyExecutable(): Promise<string | null> {
+  const selected = await open({
+    title: messages().backendDialogs.scrcpyExecutable,
+    multiple: false,
+    directory: false,
+  });
+  return typeof selected === "string" ? selected : null;
 }
 
 export async function onLogcatBatch(callback: (batch: LogcatBatch) => void): Promise<UnlistenFn> {

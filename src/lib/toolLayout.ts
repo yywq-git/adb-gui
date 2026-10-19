@@ -7,6 +7,7 @@
 export type ToolModuleId =
   | "screenshot"
   | "recording"
+  | "mirror"
   | "install"
   | "deeplink"
   | "ports"
@@ -18,6 +19,7 @@ export type ToolModuleId =
 export const DEFAULT_TOOL_ORDER: readonly ToolModuleId[] = [
   "screenshot",
   "recording",
+  "mirror",
   "install",
   "deeplink",
   "ports",

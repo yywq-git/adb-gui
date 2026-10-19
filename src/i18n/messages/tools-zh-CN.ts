@@ -210,6 +210,23 @@ export const toolMessagesZh = {
       revealInFileManager: "在文件管理器中显示",
       openWithDefaultApp: "用默认程序打开",
     },
+    mirrorTool: {
+      start: "开始投屏",
+      stop: "停止投屏",
+      starting: "正在启动...",
+      stopping: "正在停止...",
+      noDevice: "未连接设备",
+      detecting: "正在查找 scrcpy...",
+      notFound: "未找到 scrcpy",
+      running: ({ device }: { device: string }) => `投屏中 · ${device}`,
+      closed: "已关闭",
+      disconnected: "设备已断开",
+      failed: ({ detail }: { detail: string }) => `启动失败: ${detail}`,
+      stopFailed: ({ detail }: { detail: string }) => `停止失败: ${detail}`,
+      moreOptions: "更多参数",
+      openSettings: "去设置",
+      redetect: "重新检测",
+    },
     screenshot: {
       screenshotPathCopied: "已复制截图路径",
       savedScreenshotActionFailed: ({

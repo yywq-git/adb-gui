@@ -2,7 +2,11 @@ import type { Messages } from "@/i18n/types";
 import type { LocalePreference } from "@/i18n/locale";
 import { LOGCAT_COLUMNS } from "@/lib/logcatView";
 import { DEFAULT_LOG_OPEN_BY_PANE, type PaneId } from "@/lib/panes";
-import { defaultSettings, type SettingsPreferences } from "@/lib/settings";
+import {
+  defaultSettings,
+  MIRROR_OPTIONS,
+  type SettingsPreferences,
+} from "@/lib/settings";
 import { DEFAULT_TOOL_ORDER, sameToolOrder, type ToolModuleId } from "@/lib/toolLayout";
 import type { Theme } from "@/store/theme";
 
@@ -10,6 +14,7 @@ export type SettingsSection =
   | "general"
   | "logcat"
   | "capture"
+  | "mirror"
   | "files"
   | "apps"
   | "codegen";
@@ -178,6 +183,44 @@ export const SETTINGS_SECTIONS: ReadonlyArray<SettingsSectionMeta> = [
     ],
   },
   {
+    id: "mirror",
+    label: (m) => m.settings.sections.mirror,
+    rows: [
+      {
+        id: "scrcpyPath",
+        label: (m) => m.settings.rows.scrcpyPath.label,
+        description: (m) => m.settings.rows.scrcpyPath.description,
+        modified: (state, defaults) =>
+          state.preferences.mirror.scrcpyPath !==
+          defaults.preferences.mirror.scrcpyPath,
+      },
+      {
+        id: "mirrorPreset",
+        label: (m) => m.settings.rows.mirrorPreset.label,
+        modified: (state, defaults) =>
+          state.preferences.mirror.preset !== defaults.preferences.mirror.preset,
+      },
+      {
+        id: "mirrorOptions",
+        label: (m) => m.settings.rows.mirrorOptions.label,
+        modified: (state, defaults) =>
+          MIRROR_OPTIONS.some(
+            ({ value }) =>
+              state.preferences.mirror.options[value] !==
+              defaults.preferences.mirror.options[value],
+          ),
+      },
+      {
+        id: "mirrorExtraArgs",
+        label: (m) => m.settings.rows.mirrorExtraArgs.label,
+        description: (m) => m.settings.rows.mirrorExtraArgs.description,
+        modified: (state, defaults) =>
+          state.preferences.mirror.extraArgs !==
+          defaults.preferences.mirror.extraArgs,
+      },
+    ],
+  },
+  {
     id: "files",
     label: (m) => m.settings.sections.files,
     rows: [
@@ -321,6 +364,12 @@ const RESET_PLANS: Readonly<Record<SettingsSection, SectionResetPlan>> = {
   },
   capture: {
     settingsKeys: ["capture", "screenshot", "recording"],
+    resetTheme: false,
+    resetLogPanes: false,
+    resetToolOrder: false,
+  },
+  mirror: {
+    settingsKeys: ["mirror"],
     resetTheme: false,
     resetLogPanes: false,
     resetToolOrder: false,

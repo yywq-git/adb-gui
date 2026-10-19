@@ -172,6 +172,7 @@ describe("useUiStore", () => {
       "deeplink",
       "screenshot",
       "recording",
+      "mirror",
       "install",
       "keys",
       "clipboard",

@@ -43,6 +43,33 @@ export interface AppPreferences {
   sortDirection: SortDirection;
 }
 
+// Rust owns the scrcpy argv each value maps to; these are only stable ids.
+export const MIRROR_PRESETS = [
+  { value: "standard", label: (t: Messages) => t.settings.mirror.presets.standard },
+  { value: "saver", label: (t: Messages) => t.settings.mirror.presets.saver },
+  { value: "high", label: (t: Messages) => t.settings.mirror.presets.high },
+] as const;
+// `requiresControl` options are not sent to scrcpy while view-only is on.
+export const MIRROR_OPTIONS = [
+  { value: "turnScreenOff", requiresControl: true, label: (t: Messages) => t.settings.mirror.options.turnScreenOff },
+  { value: "stayAwake", requiresControl: true, label: (t: Messages) => t.settings.mirror.options.stayAwake },
+  { value: "showTouches", requiresControl: true, label: (t: Messages) => t.settings.mirror.options.showTouches },
+  { value: "alwaysOnTop", requiresControl: false, label: (t: Messages) => t.settings.mirror.options.alwaysOnTop },
+  { value: "noAudio", requiresControl: false, label: (t: Messages) => t.settings.mirror.options.noAudio },
+  { value: "viewOnly", requiresControl: false, label: (t: Messages) => t.settings.mirror.options.viewOnly },
+] as const;
+export type MirrorPreset = (typeof MIRROR_PRESETS)[number]["value"];
+export type MirrorOption = (typeof MIRROR_OPTIONS)[number]["value"];
+export type MirrorOptions = Record<MirrorOption, boolean>;
+export interface MirrorPreferences {
+  preset: MirrorPreset;
+  options: MirrorOptions;
+  // Stored verbatim; Rust is the only parser of the argument syntax.
+  extraArgs: string;
+  // null delegates discovery to Rust (PATH, then common install locations).
+  scrcpyPath: string | null;
+}
+
 export const SETTINGS_STORAGE_KEY = "adb-gui-settings";
 export const SETTINGS_VERSION = 1;
 export const STARTUP_OPTIONS: ReadonlyArray<{
@@ -81,6 +108,7 @@ export interface SettingsPreferences {
   files: FilePreferences;
   apps: AppPreferences;
   codegen: GeneratorOptions;
+  mirror: MirrorPreferences;
 }
 
 export function defaultSettings(): SettingsPreferences {
@@ -105,6 +133,19 @@ export function defaultSettings(): SettingsPreferences {
     },
     apps: { sortBy: "name", sortDirection: "asc" },
     codegen: { ...DEFAULT_GENERATOR_OPTIONS },
+    mirror: {
+      preset: "standard",
+      options: {
+        turnScreenOff: false,
+        stayAwake: false,
+        showTouches: false,
+        alwaysOnTop: false,
+        noAudio: false,
+        viewOnly: false,
+      },
+      extraArgs: "",
+      scrcpyPath: null,
+    },
   };
 }
 
@@ -155,6 +196,30 @@ export function deviceStartDirectoryError(path: string): AppErrorPayload | null 
   return !path.startsWith("/") || path.includes("\0")
     ? { code: "settings.directoryInput" }
     : null;
+}
+
+// POSIX `/...`, Windows `C:\...` / `C:/...` and UNC `\\host\share`.
+export function scrcpyPathError(path: string): AppErrorPayload | null {
+  const absolute =
+    path.startsWith("/") || /^[A-Za-z]:[\\/]/.test(path) || path.startsWith("\\\\");
+  return !absolute || path.includes("\0")
+    ? { code: "settings.invalidScrcpyPath" }
+    : null;
+}
+
+function scrcpyPath(source: Record<string, unknown>): string | null {
+  const path = source.scrcpyPath;
+  if (path === undefined || path === null) return null;
+  if (typeof path !== "string" || scrcpyPathError(path))
+    throw new AppError("settings.invalidScrcpyPath", {});
+  return path;
+}
+
+function extraArgs(source: Record<string, unknown>, initial: string): string {
+  const value = text(source, "extraArgs", initial);
+  // A single-line input cannot produce these; their presence means foreign data.
+  if (/[\0\r\n]/.test(value)) throw new AppError("settings.invalidField", { key: "extraArgs" });
+  return value;
 }
 
 function startDirectory(source: Record<string, unknown>): string | null {
@@ -220,6 +285,8 @@ export function decodeSettings(raw: string | null): SettingsPreferences {
   const files = group(source.files);
   const apps = group(source.apps);
   const codegen = group(source.codegen);
+  const mirror = group(source.mirror);
+  const mirrorOptions = group(mirror.options);
   const startupPane =
     general.startupPane === undefined
       ? defaults.general.startupPane
@@ -275,6 +342,17 @@ export function decodeSettings(raw: string | null): SettingsPreferences {
         "customSeparator",
         defaults.codegen.customSeparator,
       ),
+    },
+    mirror: {
+      preset: choice(mirror, "preset", defaults.mirror.preset, MIRROR_PRESETS),
+      options: Object.fromEntries(
+        MIRROR_OPTIONS.map(({ value }) => [
+          value,
+          flag(mirrorOptions, value, defaults.mirror.options[value]),
+        ]),
+      ) as MirrorOptions,
+      extraArgs: extraArgs(mirror, defaults.mirror.extraArgs),
+      scrcpyPath: scrcpyPath(mirror),
     },
     general: {
       startupPane: startup.value,

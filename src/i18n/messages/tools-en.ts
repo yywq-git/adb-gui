@@ -216,6 +216,23 @@ export const toolMessagesEn = {
       revealInFileManager: "Reveal in file manager",
       openWithDefaultApp: "Open with default app",
     },
+    mirrorTool: {
+      start: "Start mirroring",
+      stop: "Stop mirroring",
+      starting: "Starting...",
+      stopping: "Stopping...",
+      noDevice: "No device connected",
+      detecting: "Looking for scrcpy...",
+      notFound: "scrcpy not found",
+      running: ({ device }: { device: string }) => `Mirroring · ${device}`,
+      closed: "Closed",
+      disconnected: "Device disconnected",
+      failed: ({ detail }: { detail: string }) => `Failed to start: ${detail}`,
+      stopFailed: ({ detail }: { detail: string }) => `Could not stop: ${detail}`,
+      moreOptions: "More options",
+      openSettings: "Open settings",
+      redetect: "Detect again",
+    },
     screenshot: {
       screenshotPathCopied: "Screenshot path copied",
       savedScreenshotActionFailed: ({

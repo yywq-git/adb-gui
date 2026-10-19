@@ -13,6 +13,7 @@ import {
   Clipboard,
   Keyboard,
   Link2,
+  MonitorSmartphone,
   PackageOpen,
   Video,
 } from "lucide-react";
@@ -21,6 +22,7 @@ import { ApkTool } from "@/components/AppManager";
 import { BugReportTool } from "@/components/BugReportTool";
 import { ClipboardTool } from "@/components/ClipboardTool";
 import { DeepLinkTool } from "@/components/DeepLinkTool";
+import { MirrorTool } from "@/components/MirrorTool";
 import { PortForwardTool } from "@/components/PortForwardTool";
 import { QuickKeysTool } from "@/components/QuickKeys";
 import { ScreenRecordTool } from "@/components/ScreenRecordTool";
@@ -60,6 +62,13 @@ export const TOOL_MODULES: Readonly<Record<ToolModuleId, ToolModuleDefinition>> 
     icon: () => <Video />,
     title: (t) => t.shell.modules.recording,
     render: ({ active }) => <ScreenRecordTool active={active} />,
+  },
+  mirror: {
+    id: "mirror",
+    reference: "A-10",
+    icon: () => <MonitorSmartphone />,
+    title: (t) => t.shell.modules.mirror,
+    render: ({ active }) => <MirrorTool active={active} />,
   },
   install: {
     id: "install",
