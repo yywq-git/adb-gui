@@ -45,9 +45,11 @@ export function ToolWorkbench({
     : "";
 
   return (
+    // Positioned so the absolute live region stays inside this scroller's clip; otherwise it
+    // overflows the document and WebKit's drag-select autoscroll lifts the whole shell.
     <div
       ref={scrollRef}
-      className="h-full min-h-0 overflow-y-auto px-[18px] pb-6 pt-4"
+      className="relative h-full min-h-0 overflow-y-auto px-[18px] pb-6 pt-4"
     >
       <div className="space-y-4">
         <DeviceSpecStrip
