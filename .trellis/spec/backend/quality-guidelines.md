@@ -58,6 +58,7 @@ Rust commands and pure helpers use colocated `#[cfg(test)]` unit tests. Verifica
 - `new_command(program: &str) -> std::process::Command`
 - `prepare_command(app: &AppHandle, adb_path: &str) -> std::process::Command`
 - `prepare_async_command(app: &AppHandle, adb_path: &str) -> tokio::process::Command`
+- `new_async_command(program: impl AsRef<OsStr>) -> tokio::process::Command` for host programs other than adb, such as scrcpy; `prepare_async_command` builds on it.
 - `which_adb() -> Result<String, AppError>` must create `where` / `which` through the shared synchronous constructor.
 
 ### 3. Contracts

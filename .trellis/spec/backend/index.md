@@ -20,6 +20,7 @@ Rust (Tauri 2) backend. ADB 调用封装, 命令模块化, Result 错误传播.
 | [Quality Guidelines](./quality-guidelines.md) | Clippy, forbidden patterns | ✅ Done |
 | [Logging Guidelines](./logging-guidelines.md) | Minimal eprintln approach | ✅ Done |
 | [Clipboard](./clipboard.md) | Shared DEX, stdin protocol and process bounds | Done |
+| [scrcpy Mirroring](./mirror.md) | scrcpy discovery, argv, extra-argument rules, sessions and exit cleanup | Done |
 
 ---
 
