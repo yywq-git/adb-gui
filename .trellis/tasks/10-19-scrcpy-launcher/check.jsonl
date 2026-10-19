@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Rust quality checks"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "Explicit failure paths and error codes"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Frontend quality checks and browser smoke requirements"}
+{"file": ".trellis/spec/frontend/settings-clipboard.md", "reason": "Section count, reset scope and settings ownership"}
+{"file": ".trellis/spec/frontend/i18n.md", "reason": "Both locales and error contract coverage"}

@@ -1,0 +1,9 @@
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend layer conventions and spec index"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "AppError codes and payloads for mirror.* errors"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Rust command, process and test conventions"}
+{"file": ".trellis/spec/frontend/settings-clipboard.md", "reason": "Settings schema, sections, reset plans and ownership rules for the new mirror section"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Settings control vocabulary, tool module and floating surface rules"}
+{"file": ".trellis/spec/frontend/i18n.md", "reason": "Bilingual catalogs and backend error contract"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "Runtime vs persisted store rules"}
+{"file": ".trellis/spec/frontend/hook-guidelines.md", "reason": "App-level event subscription and cleanup"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Command/event contract between Rust sessions and frontend"}
