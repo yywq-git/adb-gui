@@ -179,6 +179,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_process::init())
         .manage(adb::AppState::new())
+        .manage(commands::clipboard_auto_push::AutoPushState::default())
         .setup(|app| {
             #[cfg(desktop)]
             app.handle()
@@ -206,6 +207,8 @@ pub fn run() {
             commands::screenshot::copy_screenshot,
             commands::clipboard::get_device_clipboard,
             commands::clipboard::set_device_clipboard,
+            commands::clipboard_auto_push::set_clipboard_auto_push,
+            commands::clipboard_auto_push::get_clipboard_auto_push_support,
             commands::logcat::clear_logcat,
             commands::logcat::get_package_pids,
             commands::logcat::list_device_processes,

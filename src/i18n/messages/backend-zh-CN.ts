@@ -161,6 +161,7 @@ export const backendErrorsZh = {
   "clipboard.readbackFailed": () => "已提交写入, 但无法回读确认",
   "clipboard.protocol": () => "剪贴板协议不兼容",
   "clipboard.unsupported": () => "此设备不支持当前剪贴板助手",
+  "clipboard.autoPushUnsupported": () => "当前平台暂不支持自动推送剪贴板",
   "adb.executeFailed": () => "执行 adb 失败",
   "device.listWorkerFailed": () => "读取设备列表任务失败",
   "adb.commandFailed": ({ status }) => `ADB 命令失败 (${status})`,

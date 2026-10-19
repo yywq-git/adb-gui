@@ -206,6 +206,8 @@ export const backendErrorsEn = {
   "clipboard.protocol": () => "The clipboard protocol is incompatible",
   "clipboard.unsupported": () =>
     "This device does not support the current clipboard helper",
+  "clipboard.autoPushUnsupported": () =>
+    "Automatic clipboard push is not supported on this platform",
   "adb.executeFailed": () => "Cannot execute adb",
   "device.listWorkerFailed": () => "The device list task failed",
   "adb.commandFailed": ({ status }) => `ADB command failed (${status})`,

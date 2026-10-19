@@ -6,6 +6,7 @@ pub mod bug_report;
 pub mod capture_behavior;
 pub mod capture_output;
 pub mod clipboard;
+pub mod clipboard_auto_push;
 pub mod deeplink;
 pub mod device;
 pub mod device_files;

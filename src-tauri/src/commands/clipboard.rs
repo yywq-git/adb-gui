@@ -8,7 +8,7 @@ use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt};
 use crate::{adb, device_helper};
 
 const SENTINEL: &[u8] = b"--ADBGUI-CLIPBOARD-V1--";
-const MAX_TEXT_BYTES: usize = 256 * 1024;
+pub(crate) const MAX_TEXT_BYTES: usize = 256 * 1024;
 const MAX_WIRE_BYTES: usize = MAX_TEXT_BYTES * 6 + 4096;
 const DEVICE_TIMEOUT_SECS: u64 = 8;
 const HOST_TIMEOUT: Duration = Duration::from_secs(DEVICE_TIMEOUT_SECS + 2);
@@ -71,7 +71,7 @@ fn validate_text(text: &str) -> Result<(), AppError> {
     Ok(())
 }
 
-fn encode_request(text: Option<&str>) -> Result<Vec<u8>, AppError> {
+pub(crate) fn encode_request(text: Option<&str>) -> Result<Vec<u8>, AppError> {
     if let Some(text) = text {
         validate_text(text)?;
     }
