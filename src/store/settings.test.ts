@@ -114,6 +114,31 @@ describe("settings persistence", () => {
     }
   });
 
+  it("keeps clipboard auto push off by default and restores it from storage", () => {
+    expect(defaultSettings().clipboard).toEqual({ autoPush: false });
+    expect(
+      decodeSettings('{"version":1,"settings":{"performance":{"backgroundEnabled":true}}}').clipboard,
+    ).toEqual({ autoPush: false });
+    for (const value of ["true", 1, null]) {
+      expect(() =>
+        decodeSettings(JSON.stringify({ version: 1, settings: { clipboard: { autoPush: value } } })),
+      ).toThrow(expect.objectContaining({ payload: { code: "settings.invalidField", params: { key: "autoPush" } } }));
+    }
+    const disk = storage();
+    const store = createSettingsStore(() => disk);
+    store.getState().update("clipboard", { autoPush: true });
+    expect(JSON.parse(disk.getItem()!)).toMatchObject({ version: 1, settings: { clipboard: { autoPush: true } } });
+    const restarted = createSettingsStore(() => disk);
+    expect(restarted.getState().preferences.clipboard.autoPush).toBe(true);
+    restarted.getState().resetSection("logcat");
+    expect(restarted.getState().preferences.clipboard.autoPush).toBe(true);
+    restarted.getState().resetSection("general");
+    expect(restarted.getState().preferences.clipboard.autoPush).toBe(false);
+    restarted.getState().update("clipboard", { autoPush: true });
+    restarted.getState().restoreDefaults();
+    expect(decodeSettings(disk.getItem()).clipboard.autoPush).toBe(false);
+  });
+
   it("keeps the previous effective value on write failure and permits retry", () => {
     const disk = storage();
     const store = createSettingsStore(() => disk);

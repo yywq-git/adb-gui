@@ -118,6 +118,18 @@ export const toolMessagesZh = {
       sendToDevice: "发送到手机",
       copyToComputer: "复制到电脑",
       noDeviceConnected: "未连接设备",
+      autoPush: {
+        label: "自动推送到手机",
+        unsupported: "当前平台暂不支持自动推送",
+        settingsUnavailable: "设置不可用, 自动推送未生效",
+        waitingDevice: "等待设备在线",
+        watching: "正在监听电脑剪贴板",
+        pushing: "正在推送...",
+        pushed: ({ time }: { time: string }) => `已推送 · ${time}`,
+        skippedNoText: "最近一次复制不是文本, 未推送",
+        skippedTooLarge: "最近一次复制超过 256 KiB, 未推送",
+        failed: ({ detail }: { detail: string }) => `未推送: ${detail}`,
+      },
     },
     deepLinkTool: {
       deepLinkOpened: "已打开 Deep Link",

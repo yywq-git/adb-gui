@@ -18,6 +18,7 @@ import {
   createActivityPollingController,
   type ActivityPollingController,
 } from "@/hooks/activityPollingController";
+import { useClipboardAutoPush } from "@/hooks/useClipboardAutoPush";
 import { getDeviceBySerial } from "@/lib/device";
 import {
   getAdbInfo,
@@ -68,6 +69,7 @@ function App() {
   const logcatRestartNonce = useLogcatStore((state) => state.restartNonce);
   const selected = getDeviceBySerial(devices, selectedDevice);
   const onlineSerial = selected?.state === "device" ? selected.serial : null;
+  useClipboardAutoPush();
 
   useEffect(() => {
     if (!isTauriRuntime()) {

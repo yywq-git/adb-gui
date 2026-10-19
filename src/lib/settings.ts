@@ -75,6 +75,7 @@ export interface SettingsPreferences {
     cozyRows: boolean;
   };
   performance: { backgroundEnabled: boolean };
+  clipboard: { autoPush: boolean };
   screenshot: ScreenshotBehavior;
   recording: SaveBehavior;
   capture: { directory: string | null };
@@ -93,6 +94,7 @@ export function defaultSettings(): SettingsPreferences {
       cozyRows: false,
     },
     performance: { backgroundEnabled: false },
+    clipboard: { autoPush: false },
     screenshot: { openAfterSave: true, revealAfterSave: true },
     recording: { openAfterSave: true },
     capture: { directory: null },
@@ -204,6 +206,7 @@ export function decodeSettings(raw: string | null): SettingsPreferences {
   const logcat = group(source.logcat);
   const columns = group(logcat.columns);
   const performance = group(source.performance);
+  const clipboard = group(source.clipboard);
   const screenshot = group(source.screenshot);
   const recording = group(source.recording);
   const capture = group(source.capture);
@@ -301,6 +304,9 @@ export function decodeSettings(raw: string | null): SettingsPreferences {
         "backgroundEnabled",
         defaults.performance.backgroundEnabled,
       ),
+    },
+    clipboard: {
+      autoPush: flag(clipboard, "autoPush", defaults.clipboard.autoPush),
     },
     screenshot: {
       openAfterSave: flag(

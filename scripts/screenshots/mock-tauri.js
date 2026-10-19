@@ -18,6 +18,9 @@
   let nextSessionId = 1;
   const calls = {};
   window.__ADB_GUI_MOCK_CALLS = calls;
+  // Browser checks flip `supported` from an init script and read the last target.
+  const clipboardAutoPush = { supported: true, generation: 0, target: null };
+  window.__ADB_GUI_MOCK_CLIPBOARD_AUTO_PUSH = clipboardAutoPush;
 
   function transformCallback(callback, once = false) {
     const id = nextCallbackId++;
@@ -42,6 +45,7 @@
       entry.callback({ event, id, payload });
     }
   }
+  window.__ADB_GUI_MOCK_EMIT = emit;
 
   // Deterministic noise so repeated runs produce identical charts and logs.
   function makeRandom(seed) {
@@ -504,6 +508,19 @@
       return null;
     },
     clear_logcat: () => null,
+    get_clipboard_auto_push_support: () => clipboardAutoPush.supported,
+    set_clipboard_auto_push: ({ target }) => {
+      clipboardAutoPush.generation += 1;
+      clipboardAutoPush.target = target;
+      if (target && !clipboardAutoPush.supported) {
+        return Promise.reject({ code: "clipboard.autoPushUnsupported" });
+      }
+      const generation = clipboardAutoPush.generation;
+      if (target) {
+        setTimeout(() => emit("clipboard-auto-push", { generation, at: Date.now(), kind: "watching" }), 0);
+      }
+      return generation;
+    },
     start_device_metrics: ({ serial }) => startMetricsSession(serial),
     stop_device_metrics: ({ sessionId }) => {
       stopSession(metricsSessions, sessionId);

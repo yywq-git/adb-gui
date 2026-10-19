@@ -121,6 +121,18 @@ export const toolMessagesEn = {
       sendToDevice: "Send to device",
       copyToComputer: "Copy to computer",
       noDeviceConnected: "No device connected",
+      autoPush: {
+        label: "Push to phone automatically",
+        unsupported: "Automatic push is not supported on this platform",
+        settingsUnavailable: "Settings are unavailable; automatic push is off",
+        waitingDevice: "Waiting for the device to come online",
+        watching: "Watching the computer clipboard",
+        pushing: "Pushing...",
+        pushed: ({ time }: { time: string }) => `Pushed · ${time}`,
+        skippedNoText: "The last copy was not text; nothing was pushed",
+        skippedTooLarge: "The last copy exceeds 256 KiB; nothing was pushed",
+        failed: ({ detail }: { detail: string }) => `Not pushed: ${detail}`,
+      },
     },
     deepLinkTool: {
       deepLinkOpened: "Deep Link opened",
