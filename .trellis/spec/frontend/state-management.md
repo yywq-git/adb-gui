@@ -23,6 +23,7 @@
 | `useLogcatStore` | `store/logcat.ts` | Logcat session identity, ring buffer, incremental filter index, and stream state |
 | `useUiStore` | `store/ui.ts` | Active pane, per-pane Logcat visibility and height, tool module order; persisted under `adb-gui-ui` |
 | `useFileBookmarkStore` | `store/fileBookmarks.ts` | File pane directory bookmarks and their colors, shared by every device; persisted under `adb-gui-file-bookmarks` |
+| `useClipboardAutoPushStore` | `store/clipboardAutoPush.ts` | Clipboard auto push platform support, bound generation and latest status (no persistence; the switch lives in `useSettingsStore.clipboard`) |
 
 ---
 
