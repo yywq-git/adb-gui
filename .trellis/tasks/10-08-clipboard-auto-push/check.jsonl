@@ -1,1 +1,5 @@
-{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python3 .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/frontend/settings-clipboard.md", "reason": "Verify settings, reset scope and revised clipboard binding contract"}
+{"file": ".trellis/spec/backend/clipboard.md", "reason": "Verify helper protocol, no retry after submit and generation check before submit"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Rust quality checks"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Frontend quality checks and browser smoke requirements"}
+{"file": ".trellis/spec/frontend/i18n.md", "reason": "Both locales and error contract coverage"}

@@ -1,1 +1,9 @@
-{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python3 .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/frontend/settings-clipboard.md", "reason": "Settings schema, section rows, reset plans and the clipboard binding contract being revised"}
+{"file": ".trellis/spec/backend/clipboard.md", "reason": "Device clipboard helper protocol, write/readback and no-retry rules reused by auto push"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "AppError codes and payloads for new clipboard codes"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Rust command, DEX and test conventions"}
+{"file": ".trellis/spec/frontend/i18n.md", "reason": "Bilingual catalogs and backend error contract for new strings and codes"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Settings controls vocabulary and Switch row contract"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "Runtime vs persisted zustand store rules"}
+{"file": ".trellis/spec/frontend/hook-guidelines.md", "reason": "App-level hook with event listener cleanup"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Command/event contract between Rust watcher and frontend binding"}

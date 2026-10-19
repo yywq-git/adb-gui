@@ -13,7 +13,7 @@
   "createdAt": "2026-10-08",
   "completedAt": null,
   "branch": null,
-  "base_branch": "claude/determined-gates-4tp7x6",
+  "base_branch": "main",
   "worktree_path": null,
   "commit": null,
   "pr_url": null,
