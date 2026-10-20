@@ -218,6 +218,11 @@ pub fn run() {
             commands::device_info::get_device_info,
             commands::device_metrics::start_device_metrics,
             commands::device_metrics::stop_device_metrics,
+            commands::mirror::detect_scrcpy,
+            commands::mirror::parse_scrcpy_extra_args,
+            commands::mirror::start_mirror,
+            commands::mirror::stop_mirror,
+            commands::mirror::list_mirror_sessions,
             commands::packages::list_packages,
             commands::app_icon::get_app_icon,
             commands::app_info::get_installed_apps,
@@ -268,6 +273,12 @@ pub fn run() {
                 commands::device_metrics::shutdown_device_metrics_sessions(),
             ) {
                 eprintln!("failed to stop device metrics during application exit: {error}");
+            }
+            // scrcpy still needs the adb server while it cleans up the device side.
+            if let Err(error) =
+                tauri::async_runtime::block_on(commands::mirror::shutdown_mirror_sessions())
+            {
+                eprintln!("failed to stop scrcpy sessions during application exit: {error}");
             }
             if let Err(error) = adb::shutdown_embedded_adb_server(_app) {
                 eprintln!("failed to stop bundled ADB server during application exit: {error}");

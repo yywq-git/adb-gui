@@ -32,6 +32,12 @@ function customized(): SettingsPreferences {
     files: { ...defaults.files, sortBy: "size", startDirectory: "/sdcard/DCIM" },
     apps: { sortBy: "apkSize", sortDirection: "desc" },
     codegen: { codeType: "code128", separatorMode: "comma", customSeparator: "" },
+    mirror: {
+      preset: "saver",
+      options: { ...defaults.mirror.options, viewOnly: true, stayAwake: true },
+      extraArgs: "--max-fps=60",
+      scrcpyPath: "/opt/homebrew/bin/scrcpy",
+    },
   };
 }
 
@@ -50,11 +56,12 @@ describe("settings sections", () => {
     expect(hasSectionResetChanges("general", state)).toBe(true);
     expect(hasSectionResetChanges("logcat", state)).toBe(false);
   });
-  it("lists six sections in navigation order without a performance group", () => {
+  it("lists seven sections in navigation order without a performance group", () => {
     expect(SETTINGS_SECTIONS.map((section) => section.id)).toEqual([
       "general",
       "logcat",
       "capture",
+      "mirror",
       "files",
       "apps",
       "codegen",
@@ -63,6 +70,7 @@ describe("settings sections", () => {
       "通用",
       "日志",
       "截图与录屏",
+      "投屏",
       "文件",
       "应用",
       "生码",
@@ -105,7 +113,7 @@ describe("settings sections", () => {
       "screenshot",
       "recording",
     ]);
-    for (const section of ["files", "apps", "codegen"] as const) {
+    for (const section of ["mirror", "files", "apps", "codegen"] as const) {
       expect(sectionResetPlan(section)).toEqual({
         settingsKeys: [section],
         resetTheme: false,
@@ -208,6 +216,31 @@ describe("settings rows", () => {
         },
       }),
     ).toEqual(new Set(["captureDirectory", "appSort"]));
+  });
+
+  it("marks each mirror row by its own preference and resets the whole group", () => {
+    const base = defaultSettingsSnapshot();
+    const mirror = base.preferences.mirror;
+    const mirrorState = (next: Partial<typeof mirror>) => ({
+      ...base,
+      preferences: { ...base.preferences, mirror: { ...mirror, ...next } },
+    });
+    expect(sectionRowIds("mirror")).toEqual([
+      "scrcpyPath",
+      "mirrorPreset",
+      "mirrorOptions",
+      "mirrorExtraArgs",
+    ]);
+    expect(modifiedRowIds(mirrorState({ scrcpyPath: "/usr/bin/scrcpy" }))).toEqual(new Set(["scrcpyPath"]));
+    expect(modifiedRowIds(mirrorState({ preset: "high" }))).toEqual(new Set(["mirrorPreset"]));
+    expect(
+      modifiedRowIds(mirrorState({ options: { ...mirror.options, noAudio: true } })),
+    ).toEqual(new Set(["mirrorOptions"]));
+    expect(modifiedRowIds(mirrorState({ extraArgs: "--max-fps=60" }))).toEqual(new Set(["mirrorExtraArgs"]));
+    expect(hasSectionResetChanges("mirror", base)).toBe(false);
+    expect(hasSectionResetChanges("mirror", mirrorState({ preset: "saver" }))).toBe(true);
+    expect(hasSectionResetChanges("capture", mirrorState({ preset: "saver" }))).toBe(false);
+    expect(resetSettingsSection(customized(), "mirror").mirror).toEqual(defaultSettings().mirror);
   });
 
   it("leaves the format row unmarked because the columns row owns that value", () => {

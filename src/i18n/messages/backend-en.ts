@@ -355,6 +355,28 @@ export const backendErrorsEn = {
     `Device metrics session ${session} was rejected`,
   "clipboard.invalidImageDimensions": () =>
     "Clipboard image dimensions are invalid",
+  "mirror.notFound": () => "scrcpy was not found",
+  "mirror.customPathInvalid": ({ path }) =>
+    `Invalid scrcpy path (${path}): the file does not exist or is not executable`,
+  "mirror.versionUnreadable": () => "Cannot read the scrcpy version",
+  "mirror.versionTimeout": () => "Reading the scrcpy version timed out",
+  "mirror.tooOld": ({ version, minimum }) =>
+    `scrcpy ${version} is too old; version ${minimum} or later is required`,
+  "mirror.extraArgsUnclosedQuote": () =>
+    "The extra arguments contain an unclosed quote",
+  "mirror.extraArgsForbidden": ({ option }) =>
+    `Extra arguments cannot include ${option}; the app chooses the device`,
+  "mirror.startFailed": () => "Cannot start scrcpy",
+  "mirror.alreadyRunning": () => "This device is already being mirrored",
+  "mirror.shuttingDown": () =>
+    "The app is shutting down; mirroring was rejected",
+  "mirror.exitFailed": ({ code }) => `scrcpy exited with code ${code}`,
+  "mirror.disconnected": () => "The device disconnected during mirroring",
+  "mirror.terminated": () => "scrcpy was terminated unexpectedly",
+  "mirror.waitFailed": () => "Cannot wait for the scrcpy process",
+  "mirror.stopFailed": () => "Cannot stop mirroring",
+  "mirror.stopAllFailed": ({ failed, total }) =>
+    `Failed to stop ${failed} of ${total} mirroring sessions`,
 } satisfies BackendErrorMessages;
 
 export const backendDialogsEn = {
@@ -371,6 +393,7 @@ export const backendDialogsEn = {
   images: "Images",
   saveDeviceFile: "Save device file",
   selectApk: "Select APK",
+  scrcpyExecutable: "Choose the scrcpy executable",
   discardBody: ({
     serial,
     remotePath,

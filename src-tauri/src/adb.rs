@@ -157,12 +157,22 @@ pub fn prepare_command(app: &AppHandle, adb_path: &str) -> Command {
 }
 
 pub fn prepare_async_command(app: &AppHandle, adb_path: &str) -> tokio::process::Command {
-    let mut command = tokio::process::Command::new(adb_path);
-    #[cfg(windows)]
-    command.creation_flags(CREATE_NO_WINDOW);
+    let mut command = new_async_command(adb_path);
     if let Some(lib_dir) = embedded_linux_lib_dir(app, adb_path) {
         command.env("LD_LIBRARY_PATH", lib_dir);
     }
+    command
+}
+
+/// Hidden-console constructor for host programs other than adb, such as scrcpy.
+pub fn new_async_command(program: impl AsRef<std::ffi::OsStr>) -> tokio::process::Command {
+    let command = tokio::process::Command::new(program);
+    #[cfg(windows)]
+    let command = {
+        let mut command = command;
+        command.creation_flags(CREATE_NO_WINDOW);
+        command
+    };
     command
 }
 
@@ -177,7 +187,7 @@ fn new_command(program: &str) -> Command {
     command
 }
 
-fn embedded_linux_lib_dir(app: &AppHandle, adb_path: &str) -> Option<PathBuf> {
+pub fn embedded_linux_lib_dir(app: &AppHandle, adb_path: &str) -> Option<PathBuf> {
     #[cfg(target_os = "linux")]
     {
         let resource_dir = app.path().resource_dir().ok()?;

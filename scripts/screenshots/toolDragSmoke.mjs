@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { chromium } from "playwright";
 import { startDevServer, APP_URL, MOCK_SCRIPT, SNAPSHOT_TIME, uiPreferences } from "./capture.mjs";
 
-const DEFAULT_ORDER = ["A-01", "A-02", "A-03", "A-04", "A-05", "A-06", "A-09", "A-07", "A-08"];
+const DEFAULT_ORDER = ["A-01", "A-02", "A-10", "A-03", "A-04", "A-05", "A-06", "A-09", "A-07", "A-08"];
 
 async function order(page) {
   return page.locator("#tool-grid > section").evaluateAll(
@@ -104,7 +104,7 @@ try {
     await dragTo(page, await headerBox(page, "A-01"), await headerBox(page, "A-04"));
     const reordered = await order(page);
     assert.notDeepEqual(reordered, DEFAULT_ORDER, "drag changed the order");
-    assert.equal(reordered.indexOf("A-01"), 3, "A-01 took the fourth slot");
+    assert.equal(reordered.indexOf("A-01"), DEFAULT_ORDER.indexOf("A-04"), "A-01 took the slot of A-04");
     assert.deepEqual(await animated(page), [], "reduced motion moves modules without animating");
     console.log("  after drag:", reordered.join(" "));
 
@@ -168,9 +168,10 @@ try {
     const moved = await order(page);
     assert.equal(moved.indexOf("A-01"), 1, "Ctrl+ArrowRight moved the module one slot");
     const focused = await page.evaluate(() => document.activeElement?.getAttribute("aria-label"));
-    assert.match(focused ?? "", /^Reorder Screenshot, 2 of 9$/, "focus stayed on the grip");
-    const announced = await page.locator('[role="status"]').first().textContent();
-    assert.equal(announced?.trim(), "Screenshot, 2 of 9", "live region announced the position");
+    assert.equal(focused, `Reorder Screenshot, 2 of ${DEFAULT_ORDER.length}`, "focus stayed on the grip");
+    // The workbench announcer, not a module's own visible status line.
+    const announced = await page.locator('span.sr-only[role="status"]').textContent();
+    assert.equal(announced?.trim(), `Screenshot, 2 of ${DEFAULT_ORDER.length}`, "live region announced the position");
 
     await page.keyboard.press("Control+ArrowLeft");
     await page.waitForTimeout(60);
@@ -193,7 +194,7 @@ try {
     });
     const { context, page, errors } = await open(browser, { storage: corrupt });
     const rendered = await order(page);
-    assert.equal(rendered.length, DEFAULT_ORDER.length, "nine modules rendered");
+    assert.equal(rendered.length, DEFAULT_ORDER.length, "every module rendered");
     assert.deepEqual([...rendered].sort(), [...DEFAULT_ORDER].sort(), "no module lost or duplicated");
     assert.deepEqual(errors, []);
     await context.close();
@@ -221,10 +222,12 @@ try {
     await page.waitForTimeout(80);
 
     const last = await headerBox(page, "A-08");
+    // The last module is not always in the first column; aim at the first slot's.
+    const firstColumn = (await headerBox(page, DEFAULT_ORDER[0])).x;
     await page.mouse.move(last.x, last.y);
     await page.mouse.down();
     await page.mouse.move(last.x, last.y - 20);
-    await page.mouse.move(last.x, scroller.top + 8);
+    await page.mouse.move(firstColumn, scroller.top + 8);
     // Hold still in the edge band and let the animation frames scroll.
     await page.waitForTimeout(2500);
     await page.mouse.up();
@@ -258,9 +261,16 @@ try {
     console.log("passed module body interaction and state survival");
   }
   // 7. Sweeping across the wide module neither flips the order back and forth
-  //    nor lets the lifted module drift from the pointer.
+  //    nor lets the lifted module drift from the pointer. The sweep line is
+  //    measured for the wide module's row with A-10 last, so later modules
+  //    cannot reflow it into another row once A-01 is lifted.
   {
-    const { context, page, errors } = await open(browser);
+    const designed = JSON.parse(uiPreferences("tools", false, 240));
+    designed.state.toolOrder = [
+      "screenshot", "recording", "install", "deeplink", "ports",
+      "keys", "clipboard", "currentApp", "bugReport", "mirror",
+    ];
+    const { context, page, errors } = await open(browser, { storage: JSON.stringify(designed) });
     await page.evaluate(() => {
       window.__frames = [];
       let pointer = null;
@@ -360,9 +370,10 @@ try {
     assert.equal((await order(page)).indexOf("A-01"), 1, "the drop committed");
 
     const grip = page.getByRole("button", { name: /^Reorder Install APK/ });
+    const before = (await order(page)).indexOf("A-03");
     await grip.focus();
     await page.keyboard.press("Control+ArrowRight");
-    assert.equal((await order(page)).indexOf("A-03"), 3, "the keyboard moved it");
+    assert.equal((await order(page)).indexOf("A-03"), before + 1, "the keyboard moved it");
     assert.deepEqual(await animated(page), [], "a keyboard move is instant");
 
     await resetFromSettings(page, async () => {

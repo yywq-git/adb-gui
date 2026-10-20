@@ -19,6 +19,7 @@ import {
   type ActivityPollingController,
 } from "@/hooks/activityPollingController";
 import { useClipboardAutoPush } from "@/hooks/useClipboardAutoPush";
+import { useMirrorRuntime } from "@/hooks/useMirrorRuntime";
 import { getDeviceBySerial } from "@/lib/device";
 import {
   getAdbInfo,
@@ -70,6 +71,7 @@ function App() {
   const selected = getDeviceBySerial(devices, selectedDevice);
   const onlineSerial = selected?.state === "device" ? selected.serial : null;
   useClipboardAutoPush();
+  useMirrorRuntime();
 
   useEffect(() => {
     if (!isTauriRuntime()) {

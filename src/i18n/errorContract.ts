@@ -30,6 +30,9 @@ export const ERROR_PARAMS = {
   "shell.resize": {},
   "shell.closeWindow": {},
   "settings.invalidField": { key: "string" },
+  "settings.invalidScrcpyPath": {},
+  "shell.listenMirror": {},
+  "shell.mirrorSessions": {},
 } as const;
 
 export type ErrorCode = keyof typeof ERROR_PARAMS;

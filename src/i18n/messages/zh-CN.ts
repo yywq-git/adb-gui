@@ -41,6 +41,7 @@ export const zhCN = {
       clipboard: "剪贴板",
       currentApp: "当前应用",
       bugReport: "Bug 报告",
+      mirror: "投屏",
     },
 
     toolLayout: {
@@ -148,6 +149,7 @@ export const zhCN = {
       general: "通用",
       logcat: "日志",
       capture: "截图与录屏",
+      mirror: "投屏",
       files: "文件",
       apps: "应用",
       codegen: "生码",
@@ -216,6 +218,20 @@ export const zhCN = {
         label: "保存录屏后打开视频",
         description: "保存失败时手机上的源文件会保留, 可重试保存或另存为",
       },
+      scrcpyPath: {
+        label: "scrcpy",
+        description: "未选择文件时, 依次在 PATH 和常见安装位置查找",
+      },
+      mirrorPreset: {
+        label: "画质",
+      },
+      mirrorOptions: {
+        label: "选项",
+      },
+      mirrorExtraArgs: {
+        label: "额外参数",
+        description: "追加在以上参数之后, 不能指定设备",
+      },
       fileSort: {
         label: "排序",
       },
@@ -273,6 +289,29 @@ export const zhCN = {
       unavailable: "本机目录不可用",
       choose: "选择保存目录",
       reset: "恢复默认保存目录",
+    },
+
+    mirror: {
+      presets: { standard: "标准", saver: "省流", high: "高清" },
+      options: {
+        turnScreenOff: "息屏投屏",
+        stayAwake: "保持唤醒",
+        showTouches: "显示触摸",
+        alwaysOnTop: "窗口置顶",
+        noAudio: "关闭音频",
+        viewOnly: "仅查看",
+      },
+      viewOnlyNote: "仅查看时不传入息屏投屏, 保持唤醒和显示触摸",
+      sources: { custom: "自定义路径", path: "PATH", known: "常见位置" },
+      version: ({ version, source }: { version: string; source: string }) =>
+        `版本 ${version} · ${source}`,
+      detecting: "正在查找 scrcpy...",
+      desktopOnly: "仅在桌面应用中可用",
+      choose: "选择 scrcpy 可执行文件",
+      reset: "恢复自动查找",
+      redetect: "重新检测",
+      installGuide: "安装指引",
+      linuxInstall: "使用官方发布包",
     },
 
     startDirectory: {
@@ -363,5 +402,8 @@ export const zhCN = {
     "shell.resize": () => "切换窗口大小失败",
     "shell.closeWindow": () => "关闭窗口失败",
     "settings.invalidField": ({ key }) => `设置字段 ${key} 无效`,
+    "settings.invalidScrcpyPath": () => "scrcpy 路径设置无效, 需要绝对路径",
+    "shell.listenMirror": () => "监听投屏状态失败",
+    "shell.mirrorSessions": () => "读取投屏会话失败",
   } satisfies ErrorMessages,
 };

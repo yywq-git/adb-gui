@@ -13,6 +13,7 @@ import {
   AppWindow,
   Camera,
   Files,
+  MonitorSmartphone,
   QrCode,
   RotateCcw,
   ScrollText,
@@ -27,6 +28,7 @@ import { CodegenSection } from "@/components/settings/sections/CodegenSection";
 import { FilesSection } from "@/components/settings/sections/FilesSection";
 import { GeneralSection } from "@/components/settings/sections/GeneralSection";
 import { LogcatSection } from "@/components/settings/sections/LogcatSection";
+import { MirrorSection } from "@/components/settings/sections/MirrorSection";
 import {
   modifiedRowIds,
   sectionResetPlan,
@@ -49,6 +51,7 @@ const SECTION_ICONS: Record<SettingsSection, typeof SlidersHorizontal> = {
   general: SlidersHorizontal,
   logcat: ScrollText,
   capture: Camera,
+  mirror: MonitorSmartphone,
   files: Files,
   apps: AppWindow,
   codegen: QrCode,
@@ -62,6 +65,8 @@ function SectionContent({ section }: { section: SettingsSection }) {
       return <LogcatSection />;
     case "capture":
       return <CaptureSection />;
+    case "mirror":
+      return <MirrorSection />;
     case "files":
       return <FilesSection />;
     case "apps":

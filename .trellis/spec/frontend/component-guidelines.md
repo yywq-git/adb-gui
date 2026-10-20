@@ -214,7 +214,7 @@ Settings rows use a fixed control vocabulary so persisted preferences have one v
 - Boolean values use `Switch` through `SettingSwitchRow`. Render `role="switch"`, expose `aria-checked`, keep the whole row clickable, and pass the unavailable state explicitly so a disabled fieldset cannot leave the row click active.
 - Single-choice values with at most three options use `SegmentedControl`. Keep one 32 px height, `radiogroup` / `radio` semantics, text labels with optional lucide icons, and ArrowLeft / ArrowRight keyboard selection.
 - Single-choice values with more than three options use `BlueprintSelect`.
-- Multi-choice values use `ChipGroup` with wrapping `aria-pressed` buttons. Do not use native checkboxes inside the settings dialog.
+- Multi-choice values use `ChipGroup` with wrapping `aria-pressed` buttons. Do not use native checkboxes inside the settings dialog. A chip that another value makes inapplicable (mirror view-only disables screen off, stay awake and show touches) sets its option `disabled` while keeping its stored `aria-pressed` value, so turning the other value off restores it.
 - Rows with a path or conditional custom input use `SettingRow layout="stacked"`; all other rows keep label and control inline within the constrained content column.
 - Shared quick controls and settings controls must call the same store update functions. Do not mirror a preference into local component state.
 

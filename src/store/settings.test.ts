@@ -63,6 +63,63 @@ describe("settings persistence", () => {
   ])("rejects malformed new preferences: %j", (settings) => {
     expect(() => decodeSettings(JSON.stringify({ version: 1, settings }))).toThrow();
   });
+  it("defaults mirroring to automatic lookup and keeps it across restart and resets", () => {
+    expect(defaultSettings().mirror).toEqual({
+      preset: "standard",
+      options: {
+        turnScreenOff: false,
+        stayAwake: false,
+        showTouches: false,
+        alwaysOnTop: false,
+        noAudio: false,
+        viewOnly: false,
+      },
+      extraArgs: "",
+      scrcpyPath: null,
+    });
+    // A file written before the mirror group existed reads with its defaults.
+    const disk = storage('{"version":1,"settings":{"recording":{"openAfterSave":false}}}');
+    const store = createSettingsStore(() => disk);
+    expect(store.getState().preferences.mirror).toEqual(defaultSettings().mirror);
+    const mirror = {
+      preset: "high" as const,
+      options: { ...defaultSettings().mirror.options, viewOnly: true, turnScreenOff: true },
+      extraArgs: '--window-title="ADB GUI" --record=C:\\clips\\a.mp4',
+      scrcpyPath: "C:\\Users\\me\\scoop\\shims\\scrcpy.exe",
+    };
+    store.getState().update("mirror", mirror);
+    const restarted = createSettingsStore(() => disk);
+    expect(restarted.getState().preferences.mirror).toEqual(mirror);
+    expect(JSON.parse(disk.getItem() ?? "null").version).toBe(1);
+    restarted.getState().resetSection("mirror");
+    expect(restarted.getState().preferences.mirror).toEqual(defaultSettings().mirror);
+    expect(restarted.getState().preferences.recording.openAfterSave).toBe(false);
+    restarted.getState().update("mirror", mirror);
+    restarted.getState().restoreDefaults();
+    expect(createSettingsStore(() => disk).getState().preferences.mirror).toEqual(defaultSettings().mirror);
+  });
+
+  it.each([
+    [{ mirror: { preset: "ultra" } }, "settings.invalidField"],
+    [{ mirror: { options: { viewOnly: "yes" } } }, "settings.invalidField"],
+    [{ mirror: { options: [] } }, "settings.invalidFormat"],
+    [{ mirror: { extraArgs: 7 } }, "settings.invalidField"],
+    [{ mirror: { extraArgs: "--a\n--b" } }, "settings.invalidField"],
+    [{ mirror: { extraArgs: "--a\0" } }, "settings.invalidField"],
+    [{ mirror: { scrcpyPath: "" } }, "settings.invalidScrcpyPath"],
+    [{ mirror: { scrcpyPath: "scrcpy" } }, "settings.invalidScrcpyPath"],
+    [{ mirror: { scrcpyPath: "/usr/bin/scr\0cpy" } }, "settings.invalidScrcpyPath"],
+    [{ mirror: { scrcpyPath: 12 } }, "settings.invalidScrcpyPath"],
+  ])("rejects malformed mirror preferences: %j", (settings, code) => {
+    expect(() => decodeSettings(JSON.stringify({ version: 1, settings }))).toThrow(code);
+  });
+
+  it("accepts absolute scrcpy paths for every desktop platform", () => {
+    for (const scrcpyPath of ["/opt/homebrew/bin/scrcpy", "C:\\tools\\scrcpy.exe", "D:/scrcpy/scrcpy.exe", "\\\\server\\share\\scrcpy.exe"]) {
+      expect(decodeSettings(JSON.stringify({ version: 1, settings: { mirror: { scrcpyPath } } })).mirror.scrcpyPath).toBe(scrcpyPath);
+    }
+  });
+
   it("loads defaults and restores only persisted preferences after restart", () => {
     const disk = storage();
     const store = createSettingsStore(() => disk);

@@ -9,6 +9,7 @@ import { CodeDecoderPage } from "@/components/CodeDecoderPage";
 import { CodeGeneratorPage } from "@/components/CodeGeneratorPage";
 import { DeepLinkTool } from "@/components/DeepLinkTool";
 import { DeviceFileManager } from "@/components/DeviceFileManager";
+import { MirrorTool } from "@/components/MirrorTool";
 import { PackageManagerPanel } from "@/components/PackageManager";
 import { PortForwardTool } from "@/components/PortForwardTool";
 import { QuickKeysTool } from "@/components/QuickKeys";
@@ -57,7 +58,7 @@ describe("tool language presentation", () => {
   const tools: [string, ComponentType][] = [
     ["current app", CurrentAppActionsTool], ["install", ApkTool], ["bug report", BugReportTool],
     ["clipboard", ClipboardTool], ["decoder", CodeDecoderPage], ["generator", CodeGeneratorPage],
-    ["deep link", DeepLinkTool], ["files", DeviceFileManager], ["apps", PackageManagerPanel],
+    ["deep link", DeepLinkTool], ["files", DeviceFileManager], ["mirror", MirrorTool], ["apps", PackageManagerPanel],
     ["ports", PortForwardTool], ["keys", QuickKeysTool], ["recording", ScreenRecordTool],
     ["screenshot", ScreenshotTool],
   ];

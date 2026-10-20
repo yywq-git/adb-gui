@@ -27,6 +27,7 @@ describe("reconcileToolOrder", () => {
       "deeplink",
       "screenshot",
       "recording",
+      "mirror",
       "install",
       "keys",
       "clipboard",
@@ -48,6 +49,7 @@ describe("reconcileToolOrder", () => {
     const stored: ToolModuleId[] = [
       "screenshot",
       "recording",
+      "mirror",
       "deeplink",
       "ports",
       "keys",
@@ -56,8 +58,23 @@ describe("reconcileToolOrder", () => {
       "bugReport",
     ];
 
-    // "install" is absent; its default index is 2.
+    // "install" is absent; its default index is 3.
     expect(reconcileToolOrder(stored, defaults)).toEqual([
+      "screenshot",
+      "recording",
+      "mirror",
+      "install",
+      "deeplink",
+      "ports",
+      "keys",
+      "clipboard",
+      "currentApp",
+      "bugReport",
+    ]);
+  });
+
+  it("places the mirror module after recording in a layout saved before it existed", () => {
+    const savedDefault = [
       "screenshot",
       "recording",
       "install",
@@ -67,6 +84,23 @@ describe("reconcileToolOrder", () => {
       "clipboard",
       "currentApp",
       "bugReport",
+    ];
+    expect(reconcileToolOrder(savedDefault, defaults)).toEqual([...defaults]);
+    expect(defaults.indexOf("mirror")).toBe(defaults.indexOf("recording") + 1);
+
+    // A customised layout keeps its order; the new module takes its default index.
+    const customised = ["bugReport", "currentApp", "clipboard", "keys", "ports", "deeplink", "install", "recording", "screenshot"];
+    expect(reconcileToolOrder(customised, defaults)).toEqual([
+      "bugReport",
+      "currentApp",
+      "mirror",
+      "clipboard",
+      "keys",
+      "ports",
+      "deeplink",
+      "install",
+      "recording",
+      "screenshot",
     ]);
   });
 

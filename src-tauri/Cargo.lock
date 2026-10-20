@@ -10,6 +10,7 @@ dependencies = [
  "base64 0.22.1",
  "chrono",
  "dirs",
+ "libc",
  "log",
  "objc2",
  "objc2-app-kit",

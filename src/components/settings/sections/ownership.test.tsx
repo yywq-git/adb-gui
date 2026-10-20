@@ -7,6 +7,7 @@ import { CodegenSection } from "@/components/settings/sections/CodegenSection";
 import { FilesSection } from "@/components/settings/sections/FilesSection";
 import { GeneralSection } from "@/components/settings/sections/GeneralSection";
 import { LogcatSection } from "@/components/settings/sections/LogcatSection";
+import { MirrorSection } from "@/components/settings/sections/MirrorSection";
 import { defaultSettings, type SettingsPreferences } from "@/lib/settings";
 
 const settingsState = vi.hoisted(() => ({
@@ -137,6 +138,7 @@ describe("settings section rendering", () => {
       [GeneralSection, "启动页面"],
       [LogcatSection, "自动换行"],
       [CaptureSection, "保存截图后打开图片"],
+      [MirrorSection, "额外参数"],
       [FilesSection, "文件夹优先"],
       [AppsSection, "排序"],
       [CodegenSection, "分隔符"],

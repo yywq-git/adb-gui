@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 interface ChipGroupOption<K extends string> {
   value: K;
   label: string;
+  disabled?: boolean;
 }
 
 interface ChipGroupProps<K extends string> {
@@ -22,12 +23,12 @@ export function ChipGroup<K extends string>({
 }: ChipGroupProps<K>) {
   return (
     <div role="group" aria-label={ariaLabel} className="flex flex-wrap gap-1.5">
-      {options.map(({ value, label }) => (
+      {options.map(({ value, label, disabled: optionDisabled = false }) => (
         <button
           key={value}
           type="button"
           aria-pressed={selected[value]}
-          disabled={disabled}
+          disabled={disabled || optionDisabled}
           onClick={() => onToggle(value, !selected[value])}
           className={cn(
             "h-7 border border-rule px-2.5 text-xs outline-none hover:bg-hover focus-visible:border-note disabled:cursor-not-allowed disabled:opacity-40",

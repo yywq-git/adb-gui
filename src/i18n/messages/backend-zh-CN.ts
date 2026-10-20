@@ -288,6 +288,26 @@ export const backendErrorsZh = {
   "metrics.stopFailed": ({ session }) => `无法停止设备性能采集会话 ${session}`,
   "metrics.rejected": ({ session }) => `设备性能采集会话 ${session} 已拒绝`,
   "clipboard.invalidImageDimensions": () => "剪贴板图片尺寸无效",
+  "mirror.notFound": () => "未找到 scrcpy",
+  "mirror.customPathInvalid": ({ path }) =>
+    `scrcpy 路径无效 (${path}), 文件不存在或不可执行`,
+  "mirror.versionUnreadable": () => "无法读取 scrcpy 版本",
+  "mirror.versionTimeout": () => "读取 scrcpy 版本超时",
+  "mirror.tooOld": ({ version, minimum }) =>
+    `scrcpy ${version} 过旧, 需要 ${minimum} 或更高版本`,
+  "mirror.extraArgsUnclosedQuote": () => "额外参数中有未闭合的引号",
+  "mirror.extraArgsForbidden": ({ option }) =>
+    `额外参数不能包含 ${option}, 投屏设备由应用指定`,
+  "mirror.startFailed": () => "无法启动 scrcpy",
+  "mirror.alreadyRunning": () => "该设备已在投屏",
+  "mirror.shuttingDown": () => "应用正在退出, 已拒绝投屏",
+  "mirror.exitFailed": ({ code }) => `scrcpy 异常退出 (退出码 ${code})`,
+  "mirror.disconnected": () => "投屏中设备已断开",
+  "mirror.terminated": () => "scrcpy 被意外终止",
+  "mirror.waitFailed": () => "等待 scrcpy 进程失败",
+  "mirror.stopFailed": () => "无法停止投屏",
+  "mirror.stopAllFailed": ({ failed, total }) =>
+    `${total} 个投屏中有 ${failed} 个未能停止`,
 } satisfies BackendErrorMessages;
 
 export const backendDialogsZh = {
@@ -303,6 +323,7 @@ export const backendDialogsZh = {
   images: "图片",
   saveDeviceFile: "保存设备文件",
   selectApk: "选择 APK",
+  scrcpyExecutable: "选择 scrcpy 可执行文件",
   discardBody: ({
     serial,
     remotePath,

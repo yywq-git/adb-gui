@@ -41,6 +41,7 @@ export const en: Messages = {
       clipboard: "Clipboard",
       currentApp: "Current app",
       bugReport: "Bug report",
+      mirror: "Mirroring",
     },
 
     toolLayout: {
@@ -134,6 +135,7 @@ export const en: Messages = {
       general: "General",
       logcat: "Logs",
       capture: "Screenshots & recording",
+      mirror: "Mirroring",
       files: "Files",
       apps: "Apps",
       codegen: "Generate",
@@ -224,6 +226,21 @@ export const en: Messages = {
       appSort: {
         label: "Sort",
       },
+      scrcpyPath: {
+        label: "scrcpy",
+        description:
+          "Without a chosen file, PATH and then common install locations are searched",
+      },
+      mirrorPreset: {
+        label: "Quality",
+      },
+      mirrorOptions: {
+        label: "Options",
+      },
+      mirrorExtraArgs: {
+        label: "Extra arguments",
+        description: "Appended after the options above; cannot choose the device",
+      },
       codeType: {
         label: "Code type",
       },
@@ -265,6 +282,30 @@ export const en: Messages = {
       unavailable: "Local directory unavailable",
       choose: "Choose save directory",
       reset: "Restore default save directory",
+    },
+
+    mirror: {
+      presets: { standard: "Standard", saver: "Data saver", high: "HD" },
+      options: {
+        turnScreenOff: "Screen off",
+        stayAwake: "Stay awake",
+        showTouches: "Show touches",
+        alwaysOnTop: "Always on top",
+        noAudio: "No audio",
+        viewOnly: "View only",
+      },
+      viewOnlyNote:
+        "View only does not send screen off, stay awake or show touches",
+      sources: { custom: "Custom path", path: "PATH", known: "Common location" },
+      version: ({ version, source }: { version: string; source: string }) =>
+        `Version ${version} · ${source}`,
+      detecting: "Looking for scrcpy...",
+      desktopOnly: "Available in the desktop app only",
+      choose: "Choose the scrcpy executable",
+      reset: "Restore automatic lookup",
+      redetect: "Detect again",
+      installGuide: "Installation guide",
+      linuxInstall: "use the official release package",
     },
 
     startDirectory: {
@@ -358,5 +399,9 @@ export const en: Messages = {
     "shell.resize": () => "Could not resize the window",
     "shell.closeWindow": () => "Could not close the window",
     "settings.invalidField": ({ key }) => `Invalid settings field: ${key}`,
+    "settings.invalidScrcpyPath": () =>
+      "Invalid scrcpy path setting; an absolute path is required",
+    "shell.listenMirror": () => "Could not listen for mirroring updates",
+    "shell.mirrorSessions": () => "Could not read mirroring sessions",
   },
 };
