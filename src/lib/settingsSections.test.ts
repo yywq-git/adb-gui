@@ -25,6 +25,7 @@ function customized(): SettingsPreferences {
     general: { startupPane: "files", checkUpdatesOnStartup: false },
     logcat: { ...defaults.logcat, softWrap: true, cozyRows: true },
     performance: { backgroundEnabled: true },
+    clipboard: { autoPush: true },
     screenshot: { openAfterSave: false, revealAfterSave: false },
     recording: { openAfterSave: false },
     capture: { directory: "/Volumes/中文 空格" },
@@ -88,7 +89,7 @@ describe("settings sections", () => {
 
   it("names every store a section reset touches", () => {
     expect(sectionResetPlan("general")).toEqual({
-      settingsKeys: ["general", "performance"],
+      settingsKeys: ["general", "performance", "clipboard"],
       resetTheme: true,
       resetLogPanes: false,
       resetToolOrder: true,
@@ -130,11 +131,24 @@ describe("settings sections", () => {
     expect(source).toEqual(customized());
   });
 
-  it("resets the performance switch together with the general group", () => {
+  it("resets the performance and clipboard switches together with the general group", () => {
     const reset = resetSettingsSection(customized(), "general");
     expect(reset.performance).toEqual(defaultSettings().performance);
+    expect(reset.clipboard).toEqual({ autoPush: false });
     expect(reset.general).toEqual(defaultSettings().general);
     expect(reset.logcat.softWrap).toBe(true);
+    for (const section of ["logcat", "capture", "files", "apps", "codegen"] as const) {
+      expect(resetSettingsSection(customized(), section).clipboard).toEqual({ autoPush: true });
+    }
+  });
+
+  it("lists the clipboard switch after the background switch and offers the general reset", () => {
+    expect(sectionRowIds("general").slice(-2)).toEqual(["background", "clipboardAutoPush"]);
+    const base = defaultSettingsSnapshot();
+    const state = { ...base, preferences: { ...base.preferences, clipboard: { autoPush: true } } };
+    expect(modifiedRowIds(state)).toEqual(new Set(["clipboardAutoPush"]));
+    expect(hasSectionResetChanges("general", state)).toBe(true);
+    expect(hasSectionResetChanges("logcat", state)).toBe(false);
   });
 });
 

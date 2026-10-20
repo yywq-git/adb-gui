@@ -169,6 +169,12 @@ export const zhCN = {
         label: "离开性能页后继续采集",
         description: "离开性能页后仍按秒采样, 会持续占用 adb 并增加设备耗电",
       },
+      clipboardAutoPush: {
+        label: "自动推送剪贴板到手机",
+        description:
+          "开启后, 电脑上新复制的文本会自动写入当前选中的手机, 包括密码等敏感内容",
+        unsupported: "当前平台暂不支持",
+      },
       toolLayout: {
         label: "工具页布局",
         description: "在工具页拖动模块标题栏可调整顺序",

@@ -10,6 +10,7 @@
 
 - `get_device_clipboard(app, serial) -> Result<ClipboardResult, AppError>`.
 - `set_device_clipboard(app, serial, text) -> Result<(), AppError>`.
+- Both commands run `run(app, serial, text)` = `encode_request(text)` -> `prepare(app, serial)` -> `submit(helper, request, writing)`. `prepare` publishes the DEX and assembles the adb command without starting it; `submit` spawns the helper before its first await, then exchanges, parses and maps write failures. A caller that must check its context before a write (auto push) does so between the two with no await in between.
 - Java entry: `com.adbgui.clipboard.Main`; preserve `com.adbgui.appinfo.Main`.
 
 ## 3. Contracts
@@ -52,3 +53,74 @@
 Wrong: `adb shell input text <clipboard>` or extracting after the last marker substring.
 
 Correct: serialize stdin JSON, find one complete marker line, strictly deserialize its envelope, and validate process exit and readback.
+
+## Scenario: Clipboard Auto Push
+
+### 1. Scope / Trigger
+
+- Apply when changing `commands/clipboard_auto_push.rs`, the `clipboard-auto-push` event, the host change-count readers, or how auto push reuses `prepare` / `submit`.
+- The frontend binding (setting, target derivation, generation filter, status line) lives in [Settings and Clipboard](../frontend/settings-clipboard.md).
+
+### 2. Signatures
+
+- `set_clipboard_auto_push(app, state: State<AutoPushState>, target: Option<Target>) -> Result<u64, AppError>`; `Target = { serial }` with `deny_unknown_fields`. Every call increments the generation and returns it; `Some` also records the baseline and spawns the watcher for that generation.
+- `get_clipboard_auto_push_support() -> bool`: `cfg!(any(target_os = "macos", windows))`.
+- Event `clipboard-auto-push`: `{ generation: u64, at: i64 /* epoch ms */, kind: "watching" | "pushing" | "pushed" | "skipped" | "failed", reason?: "no_text" | "too_large", error?: AppError }`.
+- `watcher::run<I: Io>(io, baseline: Option<i64>)` is the whole loop. `Io` injects `is_current`, `change_count`, `wait`, `read_text -> Result<Option<String>, AppError>`, `prepare`, `submit`, `emit`; `NativeIo` is the only production implementation.
+
+### 3. Contracts
+
+- Poll only the change count every 500 ms: macOS `NSPasteboard::generalPasteboard().changeCount()` inside an `autoreleasepool` (NSPasteboard is not main-thread-only in objc2-app-kit 0.3), Windows `GetClipboardSequenceNumber()` (`0` = no clipboard access -> `None`, read nothing). Linux compiles neither; `set_clipboard_auto_push(Some)` returns `clipboard.autoPushUnsupported` there.
+- The baseline is read inside the command, before it returns: content copied before the target was set is never pushed. An unknown baseline adopts the first known count without reading.
+- Read text only after the count changed, on a blocking worker, through `arboard` (the library behind the clipboard plugin). `arboard::Error::ContentNotAvailable` means no text (`skipped(no_text)`); every other error is `clipboard.hostReadFailed` with the raw diagnostic in `detail`. The plugin flattens these errors to English strings, which must not be matched.
+- Empty text -> `skipped(no_text)`; more than `MAX_TEXT_BYTES` (256 KiB UTF-8) -> `skipped(too_large)`. Neither prepares nor writes.
+- Deduplicate within one generation by a `RandomState` hash of the last successfully pushed text. Never store the text. A failed push does not record the hash; a new generation starts with no hash.
+- The loop is sequential: no queue. Copies made during a push collapse into one later read of the newest count. A failure (prepare or submit) emits `failed` and consumes that count; the next copy is the next attempt. A submitted write is never retried and `clipboard.writeUnconfirmed` is not success.
+- Check `is_current` (generation equal and `!adb::is_shutting_down`) after every await: after `wait`, after `read_text`, after `prepare` (then call `submit` with no await in between), and after `submit` before reporting. A stale generation exits without emitting.
+- `emit` checks the generation again and logs emit failures with `eprintln!`. Events never contain clipboard text; the frontend filters by generation once more.
+
+### 4. Validation & Error Matrix
+
+| Condition | Result |
+| --- | --- |
+| Count unchanged or unavailable | No read, no event |
+| No text / non-text content | `skipped(no_text)`, no write |
+| Text above 256 KiB | `skipped(too_large)`, no write |
+| `arboard` read failure or worker join failure | `failed(clipboard.hostReadFailed)` with `detail` |
+| Same text as the last success in this generation | No write, no event |
+| `prepare` or `submit` failure | `failed(<error>)`, no retry |
+| Generation changed during `read_text`, `prepare` or `submit` | Exit; no `submit` after a stale `prepare`, no event |
+| `Some(target)` on Linux | `Err(clipboard.autoPushUnsupported)` |
+
+### 5. Good/Base/Bad Cases
+
+- Good: five quick copies while a push runs end with the phone holding the fifth text after one more push.
+- Base: copying the same text twice pushes once; switching A -> B -> A starts three generations and pushes it again to A.
+- Bad: retrying a locked-device failure each poll, which starts the helper every 500 ms until the phone is unlocked.
+
+### 6. Tests Required
+
+- Drive `watcher::run` with a fake `Io` (no adb, no clipboard): baseline content never pushed; one change pushes once and an unchanged count reads nothing; per-generation dedupe and re-push in a new generation; copies during a push collapse to the newest text; failed write not retried and not recorded as pushed; failed prepare reported then next copy pushed; stale generation after prepare submits nothing and emits nothing; stale generation after submit emits nothing; empty / non-text / oversized / unreadable copies never prepared or written; exactly 256 KiB is pushed.
+- `Watcher::observe` with unknown and known baselines.
+- Serialize every status and assert the event keys are only `generation`, `at`, `kind`, `reason`, `error`.
+- The platform code compiles only for macOS / Windows. When a cross `cargo check` is blocked by C dependencies (ring needs MSVC `lib.exe`, objc2-exception-helper needs Apple clang), record the blocker and verify the packaged app on the device.
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```rust
+let helper = clipboard::prepare(&app, &serial).await?;
+tokio::time::sleep(Duration::from_millis(10)).await;
+clipboard::submit(helper, &request, true).await?; // the target may have changed
+```
+
+#### Correct
+
+```rust
+let helper = io.prepare().await?;
+if !io.is_current() {
+    return;
+}
+let result = io.submit(helper, &text).await; // spawns before its first await
+```

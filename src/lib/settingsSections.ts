@@ -37,8 +37,8 @@ export interface SettingsSectionMeta {
   rows: readonly SettingsRowMeta[];
 }
 
-// Navigation order. The performance switch lives in the general section, so
-// `performance` stays a preference key without being a section of its own.
+// Navigation order. The performance and clipboard switches live in the general
+// section, so those keys stay preferences without being sections of their own.
 export const SETTINGS_SECTIONS: ReadonlyArray<SettingsSectionMeta> = [
   {
     id: "general",
@@ -85,6 +85,14 @@ export const SETTINGS_SECTIONS: ReadonlyArray<SettingsSectionMeta> = [
         modified: (state, defaults) =>
           state.preferences.performance.backgroundEnabled !==
           defaults.preferences.performance.backgroundEnabled,
+      },
+      {
+        id: "clipboardAutoPush",
+        label: (m) => m.settings.rows.clipboardAutoPush.label,
+        description: (m) => m.settings.rows.clipboardAutoPush.description,
+        modified: (state, defaults) =>
+          state.preferences.clipboard.autoPush !==
+          defaults.preferences.clipboard.autoPush,
       },
     ],
   },
@@ -308,7 +316,7 @@ export interface SectionResetPlan {
 
 const RESET_PLANS: Readonly<Record<SettingsSection, SectionResetPlan>> = {
   general: {
-    settingsKeys: ["general", "performance"],
+    settingsKeys: ["general", "performance", "clipboard"],
     resetTheme: true,
     resetLogPanes: false,
     resetToolOrder: true,

@@ -156,6 +156,12 @@ export const en: Messages = {
         description:
           "Continue sampling every second, using adb and device battery",
       },
+      clipboardAutoPush: {
+        label: "Push clipboard to phone automatically",
+        description:
+          "When on, newly copied text on this computer is written to the selected phone, including passwords and other sensitive text",
+        unsupported: "Not supported on this platform",
+      },
       toolLayout: {
         label: "Tools layout",
         description: "Drag a module header on the Tools page to reorder it",

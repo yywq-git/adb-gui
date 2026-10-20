@@ -6,10 +6,13 @@ version = 4
 name = "adb-gui"
 version = "0.1.11"
 dependencies = [
+ "arboard",
  "base64 0.22.1",
  "chrono",
  "dirs",
  "log",
+ "objc2",
+ "objc2-app-kit",
  "regex",
  "serde",
  "serde_json",

@@ -2,7 +2,7 @@
 
 ## 1. Scope / Trigger
 
-- Apply to shared preference controls, startup behavior, capture options and manual clipboard transfers. Read [Bilingual UI and Error Presentation](./i18n.md) for locale, catalog and structured-error contracts.
+- Apply to shared preference controls, startup behavior, capture options, manual clipboard transfers and clipboard auto push. Read [Bilingual UI and Error Presentation](./i18n.md) for locale, catalog and structured-error contracts.
 
 ## 2. Signatures
 
@@ -14,13 +14,15 @@
 - `migrateSettings(version, settings)` in `lib/settings.ts` runs before field validation.
 - `takeScreenshot(serial, ScreenshotBehavior, CaptureDestination)` requires a click-time snapshot; `startScreenRecord(serial, CaptureDestination)` freezes the directory; `stopScreenRecord(SaveRecordingRequest)` takes `{sessionId,behavior,target}` at each save attempt.
 - `createClipboardTransfer(deps).bind(device) / transfer(direction) / dispose()`.
-- Native clipboard wrappers belong in `lib/tauri.ts`.
+- Native clipboard wrappers belong in `lib/tauri.ts`, including `setClipboardAutoPush(target: { serial, contextKey } | null): Promise<number>` (sends only `{ serial }`), `getClipboardAutoPushSupport(): Promise<boolean>` and `onClipboardAutoPushStatus(callback)` for the `clipboard-auto-push` event ([backend contract](../backend/clipboard.md#scenario-clipboard-auto-push)).
+- `clipboardAutoPushTarget({ tauri, supported, enabled, device })` and `createClipboardAutoPushBinding(deps).start() / bind(target) / stop()` live in `lib/clipboardAutoPush.ts`.
+- `useClipboardAutoPushStore` (runtime, not persisted) and `clipboardAutoPushStatus(inputs)` live in `store/clipboardAutoPush.ts`. `useClipboardAutoPush()` is mounted once in `App`; `useClipboardAutoPushControl()` is the switch shared by `ClipboardTool` and `GeneralSection`.
 
 ## 3. Contracts
 
 - Keep `theme`, `locale` and `adb-gui-ui` as independent owners of their existing values. Store settings preferences under `adb-gui-settings` as `{version:1,settings}`. Do not duplicate language, theme or pane/log visibility there; language belongs only to `useLocaleStore`.
 - Logcat and performance runtime stores must not own persisted view/background preferences. Do not persist rings, logs, queries, selection, pause flags, session IDs or clipboard text.
-- Default to last pane, startup update checks enabled, standard log columns, wrap off, crash folding on, cozy rows off, background metrics off, all three post-save actions on.
+- Default to last pane, startup update checks enabled, standard log columns, wrap off, crash folding on, cozy rows off, background metrics off, clipboard auto push off, all three post-save actions on.
 - Derive standard/compact state from columns. Quick controls and dialog controls must write the same settings action.
 - `SETTINGS_SECTIONS` is the only source of section order and labels. Dispatch section content through an exhaustive `switch` over `SettingsSection` closed by `assertNever`; never add a fallback branch that renders one section for unmatched ids. `performance` is a preference key rendered inside the general section, not a section of its own.
 - Render all six sections in one scroll container. The left navigation is an anchor index: clicks and ArrowUp / ArrowDown / Home / End scroll to the section, while a local scrollspy controls `aria-current`. `openSettings(section)` opens the dialog and scrolls to that section without changing its callers.
@@ -41,7 +43,18 @@
 - `createRecordingController` owns frontend action coordination, automatic-attempt identity and stale-response revision. Keep Rust phase authoritative. Polling must not overwrite an in-flight operation, and settings-read failures must still consume the automatic attempt. Only explicit retry/save-as/discard actions recover failures.
 - Dialog returns revalidate the original session before submitting, including disposal/resume and device changes. Cancel preserves the session and returns focus. Open/reveal always uses the actual saved result path.
 - Bind clipboard operations to serial, context revision and operation ID. Subscribe synchronously to selected device/availability/transport changes, including A -> B -> A. Check immediately before each write submission. Already-submitted writes cannot be withdrawn.
-- Read source clipboard only on click. Keep one active operation per context, suppress stale feedback/finally, and release the subscription on unmount. Do not preview, persist, poll or log clipboard contents.
+- Manual transfers read the source clipboard only on click. Keep one active operation per context, suppress stale feedback/finally, and release the subscription on unmount.
+- Auto push polls only the host change count, in Rust; the text is read in Rust after a change and never enters the webview. Neither path previews, persists or logs clipboard contents.
+
+### Clipboard auto push
+
+- Persist `clipboard: { autoPush: boolean }`, decoded with `flag(group, "autoPush", false)` without raising `SETTINGS_VERSION`. Row `clipboardAutoPush` follows `background` in General with a `modified` predicate; `sectionResetPlan("general").settingsKeys` includes `clipboard`, so the section reset and the global reset turn it off.
+- The module switch and the settings row both call `useClipboardAutoPushControl().setChecked`, which is `update("clipboard", { autoPush })`. Disable the switch outside Tauri, when `supported === false` or when settings are unavailable; an offline device does not disable it. On an unsupported platform the settings row replaces its description with `settings.rows.clipboardAutoPush.unsupported`; do not detect the platform from the user agent.
+- Target = `{ serial, contextKey: clipboardContextKey(device) }` only when Tauri, `supported === true`, `available && autoPush` and the selected device is in state `device`; otherwise `null`. `useClipboardAutoPush` calls `binding.bind(target)` from an effect keyed by `contextKey`, so an equal target re-rendered is not resent while A -> B -> A sends three targets.
+- The binding is created once per hook instance and survives StrictMode cleanup. `start()` registers the listener (disposing a late registration) and queries support once; `stop()` unlistens and sends `null`. Requests run one at a time through a promise queue so Rust applies them in call order; only the latest request may call `bound` / `bindFailed`.
+- The store discards events whose generation is older than the bound one, keeps the newest event of a generation whose command has not returned (`early`) and applies it in `bound`. `beginBind` clears the previous result, so another device never shows "pushed". `bound(generation, true)` starts at `watching` because the command returns after the baseline is recorded.
+- `clipboardAutoPushStatus` precedence: not Tauri -> `off`; `supported === false` -> `unsupported`; settings unavailable -> `settingsUnavailable`; switch off -> `off`; support/listener failure -> `failed`; support unknown -> `null`; device offline -> `waitingDevice`; else the runtime status (`null` while binding).
+- The module renders one `role="status"` `aria-live="polite"` line below the switch (none while `off`, an empty line while `null`). Tones: `watching` / `pushing` ink2, `pushed` ok with `timeOfDay(locale)`, `skipped(no_text)` / `waitingDevice` / `unsupported` ink3, `skipped(too_large)` / `settingsUnavailable` warn, `failed` err with `errorText`. Automatic results never toast; the manual buttons keep their toasts.
 
 ## 4. Validation & Error Matrix
 
@@ -50,6 +63,9 @@
 - Storage write failure -> retain last effective preference and expose unsaved error; never imply persistence succeeded.
 - Empty/non-text/oversized clipboard or native read failure -> preserve destination. Do not classify plugin string errors by matching English text.
 - Old read completion after a context change -> no write. Old submitted write completion -> no new-target success or busy-state mutation.
+- Malformed `clipboard.autoPush` -> `settings.invalidField` (`key: "autoPush"`); settings become unavailable and the target is `null`.
+- `setClipboardAutoPush` rejection for the latest request -> `failed` status with the payload; a stale rejection or result is ignored. Support query or listener registration failure -> `setupError`, shown as `failed` while the switch is on.
+- Auto push event of an older generation -> ignored; of an unbound newer generation -> held as `early` until its command returns, then applied or discarded.
 
 ## 5. Good/Base/Bad Cases
 
@@ -66,6 +82,8 @@
 - Browser-check the dialog against `scripts/screenshots/mock-tauri.js` at 1200x800 and 900x600 in both themes: six-section rendering, no horizontal overflow, anchor clicks, scrollspy, navigation keys, per-section and global reset, Escape focus restoration, the corrupted-settings disabled scope, and quick-control synchronization. The mock answers `plugin:dialog|message` with the ok button label because plugin-dialog resolves a confirmation by comparing labels; returning a boolean silently reads as cancel.
 - Cover startup zero-call and in-flight invalidation behavior.
 - Cover A -> B -> A, disconnect/authorization loss, transport replacement, stale finally and no retry after writes.
+- Auto push: setting default/missing/non-boolean/restart/general and global reset; target derivation for each blocking input and transport identity; binding order A -> B -> A, unchanged-target dedupe, latest-request-wins for results and rejections, `stop` with a late listener registration, StrictMode stop/start ordering, support queried once, setup failures; store generation filter, early events, cleared result on rebind; status precedence; SSR of every status line in both languages, disabled states, the unsupported settings description and no toast.
+- Browser-check auto push with `mock-tauri.js` (`__ADB_GUI_MOCK_CLIPBOARD_AUTO_PUSH.supported`, `__ADB_GUI_MOCK_EMIT`) at 900x600 and 1200x800 in both themes and languages: row click, persisted switch, watching / pushed / locked / too-large lines without a toast, a stale generation ignored, settings row sync and section reset, and both switches disabled when unsupported.
 - Check dialog layout at 1200x800 and 900x600 in both themes, focus trapping, Escape and keyboard tab navigation.
 - Use a real packaged Tauri app for native capture/clipboard tests. On macOS launch debug bundles through LaunchServices (`open -n`).
 
@@ -74,6 +92,10 @@
 Wrong: capture `serial`, await source text, compare only `serial`, then write.
 
 Correct: capture monotonically increasing context revision and operation ID, await the source, validate the still-current operation, then submit the write without another await in between.
+
+Wrong: poll `readText()` from a `setInterval` in the webview and call `setDeviceClipboard` when it differs; the timer stalls while the window is hidden and the text crosses into the webview.
+
+Correct: send only the target to Rust (`setClipboardAutoPush`) and render the generation-filtered status events.
 
 ## Browsing and Generator Preferences
 

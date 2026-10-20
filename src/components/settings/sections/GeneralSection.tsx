@@ -10,6 +10,7 @@ import {
   useSettingsView,
 } from "@/components/settings/SettingRow";
 import { SegmentedControl } from "@/components/settings/controls/SegmentedControl";
+import { useClipboardAutoPushControl } from "@/hooks/useClipboardAutoPush";
 import { STARTUP_OPTIONS } from "@/lib/settings";
 import { useSettingsStore } from "@/store/settings";
 import { useThemeStore, type Theme } from "@/store/theme";
@@ -40,6 +41,7 @@ export function GeneralSection() {
   const setTheme = useThemeStore((s) => s.setTheme);
   const resetToolOrder = useUiStore((s) => s.resetToolOrder);
   const toolLayoutChanged = useSettingsView().modified("toolLayout");
+  const clipboardAutoPush = useClipboardAutoPushControl();
 
   return (
     <>
@@ -111,6 +113,17 @@ export function GeneralSection() {
           onChange={(backgroundEnabled) =>
             update("performance", { backgroundEnabled })
           }
+        />
+        <SettingSwitchRow
+          id="clipboardAutoPush"
+          checked={clipboardAutoPush.checked}
+          disabled={clipboardAutoPush.disabled}
+          description={
+            clipboardAutoPush.unsupported
+              ? t.settings.rows.clipboardAutoPush.unsupported
+              : undefined
+          }
+          onChange={clipboardAutoPush.setChecked}
         />
       </SettingsFieldset>
     </>

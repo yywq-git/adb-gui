@@ -43,6 +43,37 @@ export async function setDeviceClipboard(serial: string, text: string): Promise<
   return invoke<void>("set_device_clipboard", { serial, text });
 }
 
+// The context key only decides when the frontend rebinds; Rust needs the serial.
+export type ClipboardAutoPushTarget = { serial: string; contextKey: string } | null;
+
+// Status only: the pushed text never reaches the webview.
+export type ClipboardAutoPushEvent = { generation: number; at: number } & (
+  | { kind: "watching" }
+  | { kind: "pushing" }
+  | { kind: "pushed" }
+  | { kind: "skipped"; reason: "no_text" | "too_large" }
+  | { kind: "failed"; error: AppErrorPayload }
+);
+
+/** Replaces the push target and resolves with the generation Rust started. */
+export async function setClipboardAutoPush(target: ClipboardAutoPushTarget): Promise<number> {
+  return invoke<number>("set_clipboard_auto_push", {
+    target: target && { serial: target.serial },
+  });
+}
+
+export async function getClipboardAutoPushSupport(): Promise<boolean> {
+  return invoke<boolean>("get_clipboard_auto_push_support");
+}
+
+export async function onClipboardAutoPushStatus(
+  callback: (event: ClipboardAutoPushEvent) => void,
+): Promise<UnlistenFn> {
+  return listen<ClipboardAutoPushEvent>("clipboard-auto-push", ({ payload }) =>
+    callback(payload.kind === "failed" ? { ...payload, error: toAppError(payload.error) } : payload),
+  );
+}
+
 export interface DeviceInfo {
   serial: string;
   state: string;

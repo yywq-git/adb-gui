@@ -54,8 +54,12 @@ pub const CAPTURE_TEMP_FAILED: &str = "capture.tempFailed";
 pub const CAPTURE_VERIFY_FAILED: &str = "capture.verifyFailed";
 pub const CAPTURE_WRITE_FAILED: &str = "capture.writeFailed";
 pub const CLIPBOARD_ABNORMAL_EXIT: &str = "clipboard.abnormalExit";
+#[cfg(not(any(target_os = "macos", windows)))]
+pub const CLIPBOARD_AUTO_PUSH_UNSUPPORTED: &str = "clipboard.autoPushUnsupported";
 pub const CLIPBOARD_DEVICE_NO_TEXT: &str = "clipboard.deviceNoText";
 pub const CLIPBOARD_ENCODE_FAILED: &str = "clipboard.encodeFailed";
+#[cfg(any(target_os = "macos", windows, test))]
+pub const CLIPBOARD_HOST_READ_FAILED: &str = "clipboard.hostReadFailed";
 pub const CLIPBOARD_INVALID_RESPONSE: &str = "clipboard.invalidResponse";
 pub const CLIPBOARD_KILL_FAILED: &str = "clipboard.killFailed";
 pub const CLIPBOARD_LOCKED: &str = "clipboard.locked";
@@ -317,8 +321,11 @@ pub const ALL: &[&str] = &[
     CAPTURE_VERIFY_FAILED,
     CAPTURE_WRITE_FAILED,
     CLIPBOARD_ABNORMAL_EXIT,
+    #[cfg(not(any(target_os = "macos", windows)))]
+    CLIPBOARD_AUTO_PUSH_UNSUPPORTED,
     CLIPBOARD_DEVICE_NO_TEXT,
     CLIPBOARD_ENCODE_FAILED,
+    CLIPBOARD_HOST_READ_FAILED,
     CLIPBOARD_INVALID_RESPONSE,
     CLIPBOARD_KILL_FAILED,
     CLIPBOARD_LOCKED,

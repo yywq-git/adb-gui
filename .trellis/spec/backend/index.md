@@ -19,7 +19,7 @@ Rust (Tauri 2) backend. ADB 调用封装, 命令模块化, Result 错误传播.
 | [Error Handling](./error-handling.md) | Structured AppError IPC, causes and stream exit contracts | ✅ Done |
 | [Quality Guidelines](./quality-guidelines.md) | Clippy, forbidden patterns | ✅ Done |
 | [Logging Guidelines](./logging-guidelines.md) | Minimal eprintln approach | ✅ Done |
-| [Clipboard](./clipboard.md) | Shared DEX, stdin protocol and process bounds | Done |
+| [Clipboard](./clipboard.md) | Shared DEX, stdin protocol, process bounds and the auto push watcher | Done |
 
 ---
 
