@@ -81,21 +81,23 @@ Windows 交叉检查跑不通时记录具体报错作为阻塞点.
 
 构建: `pnpm tauri build --bundles app -c '{"bundle":{"createUpdaterArtifacts":false}}'`, 安装到 `/Applications`, 从 Finder / LaunchServices 启动 (验证非 shell PATH 环境).
 
-- [ ] 模块显示 scrcpy 可用, 设置显示 `/opt/homebrew/bin/scrcpy`, 版本 5.0.1, 来源 "常见位置".
-- [ ] 开始投屏 -> scrcpy 窗口显示手机画面; 同时打开 logcat 和性能面板, 投屏前后 logcat 流不中断 (`adb` server 未重启).
-- [ ] 模块停止 -> 窗口关闭, 无错误; 直接关闭 scrcpy 窗口 -> 模块显示已关闭.
-- [ ] 三个预设各启动一次; 窗口置顶, 关闭音频, 仅查看, 息屏投屏分别生效.
-- [ ] 额外参数 `--window-title="ADB GUI test"` 生效; `--bogus` 显示 scrcpy 错误; `-s abc` 在设置里即时报错.
-- [ ] 自定义路径指向不存在文件 -> 路径错误, 不回退; 恢复自动后恢复可用.
-- [ ] 投屏中拔掉 USB -> 显示设备已断开.
-- [ ] 无线连接的设备投屏 (若条件允许).
-- [ ] 投屏中退出应用 -> scrcpy 窗口关闭, 无残留 scrcpy 进程 (`pgrep scrcpy`).
-- [ ] 重启应用后预设, 开关, 额外参数保持.
-- [ ] 测试结束恢复用户原有设置.
+- [x] 模块显示 scrcpy 可用, 设置显示 `/opt/homebrew/bin/scrcpy`, 版本 5.0.1, 来源 "常见位置".
+- [x] 开始投屏 -> scrcpy 窗口显示手机画面; 同时打开 logcat 和性能面板, 投屏前后 logcat 流不中断 (`adb` server 未重启).
+- [x] 模块停止 -> 窗口关闭, 无错误; 直接关闭 scrcpy 窗口 -> 模块显示已关闭.
+- [x] 三个预设各启动一次; 窗口置顶, 关闭音频, 仅查看, 息屏投屏分别生效.
+- [x] 额外参数窗口标题生效; `--bogus` 显示 scrcpy 错误; `-s abc` 在设置里即时报错且启动再次拒绝.
+- [x] 自定义路径指向不存在文件 -> 路径错误, 不回退; 恢复自动后恢复可用.
+- [x] 投屏中拔掉 USB -> 会话进程回收, 插回后显示设备已断开.
+- [ ] 无线连接的设备投屏 (若条件允许). 本轮未启用无线调试, 记为未覆盖范围.
+- [x] 投屏中退出应用 -> scrcpy 窗口关闭, 无残留 scrcpy 进程 (`pgrep scrcpy`).
+- [x] 重启应用后预设, 开关, 额外参数保持.
+- [x] 测试结束恢复用户原有设置.
 
 未覆盖项在测试记录中写明: Windows, Linux 真机; 第二台设备同时投屏 (若无第二台设备).
 
 > 状态 (2026-10-19): 阶段 6 尚未执行, 需要本地 macOS + 真机. 云端只用官方 scrcpy 5.0.1 Linux 包验证了查找 (自定义路径 / PATH), 版本解析, 自定义路径无效不回退, 以及 adb 不可用和 `--bogus` / `--no-control --stay-awake` 时的退出码与 ERROR 文本提取 (临时探针, 未提交).
+
+> 更新 (2026-10-21): 本地必需验收完成, 详见 [validation.md](./validation.md). 双设备使用 Redmi K70 真机 + Android 17 只读模拟器. Windows/Linux 原生运行和无线投屏未覆盖, 不作通过声明. 测试进程和临时产物已清理, 未修改产品代码或创建提交.
 
 ## 风险文件
 

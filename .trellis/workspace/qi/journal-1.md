@@ -864,3 +864,45 @@ Created the feature branch and committed unified preferences, manual clipboard t
 ### Next Steps
 
 - None - task complete
+
+
+## Session 25: 投屏与剪贴板自动推送原生验收
+
+**Date**: 2026-10-21
+**Task**: 投屏与剪贴板自动推送原生验收
+**Branch**: `main`
+
+### Summary
+
+完成 macOS 打包应用与真机常规验收, 投屏结项归档; 剪贴板保留隐私预览授权复测. 恢复原数据并清理测试环境, 无新增提交.
+
+### Main Changes
+
+- 使用本地 macOS 27.0.1 arm64 release 包和 Redmi K70 Android 16 USB 真机验收, 并用只读 Android 17 模拟器补验双设备并发和 A -> B -> A.
+- 投屏完成三档画质, 各开关, 参数/路径/版本错误, Logcat/性能连续性, 直接关闭窗口, USB 物理拔插与双会话退出回收. 任务归档到 `archive/2026-10/10-19-scrcpy-launcher`.
+- 剪贴板完成 5 分钟后台, 实际 TextEdit 复制, 去重/合并, 图片/超限拒绝, 设置重置/持久化, 设备切换/重连, 锁屏拒绝与手动双向回归. 隐私预览下系统授权未完成, 保留 in_progress.
+- 前端 637 项, macOS Rust release runner 182 项, production build, 格式检查及签名校验通过. 不修改产品代码或创建 Git 提交; 下列提交是已合并实现的历史基线.
+- 原设置, 两端完整剪贴板和手机临时设置已恢复. 验收应用, scrcpy, 模拟器及辅助进程逐 PID 核对退出, 临时产物清理; 保留用户原有 adb server 和已安装的测试版应用.
+- 详细证据: [投屏](../../tasks/archive/2026-10/10-19-scrcpy-launcher/validation.md), [剪贴板](../../tasks/10-08-clipboard-auto-push/validation.md).
+
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `dd4bee4` | Merge scrcpy launcher (#14), 历史实现基线 |
+| `4b24010` | Merge clipboard auto push (#13), 历史实现基线 |
+
+### Testing
+
+- [OK] 637 项前端测试, 182 项 macOS Rust release 测试, production build, rustfmt, 代码签名及本地常规验收通过.
+- [待复测] macOS 剪贴板隐私预览下的系统授权交互未完成; 恢复原配置后常规推送通过.
+- [OK] 原数据和设置恢复, 测试进程和临时文件清理完成.
+
+### Status
+
+[OK] 投屏任务 completed 并归档. 剪贴板任务 in_progress, 仅保留隐私预览授权验证待办.
+
+### Next Steps
+
+- 在可用的 macOS 系统授权提示/许可环境中复测剪贴板隐私预览; Windows/Linux 原生运行和无线场景仍属于未覆盖范围.

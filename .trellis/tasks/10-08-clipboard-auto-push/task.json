@@ -15,12 +15,12 @@
   "branch": "claude/funny-cannon-36fhy1",
   "base_branch": "main",
   "worktree_path": null,
-  "commit": null,
-  "pr_url": null,
+  "commit": "4b24010",
+  "pr_url": "https://github.com/zechuan-start/adb-gui/pull/13",
   "subtasks": [],
   "children": [],
   "parent": null,
   "relatedFiles": [],
-  "notes": "",
+  "notes": "2026-10-21: macOS + Redmi K70 常规验收通过, 覆盖后台 5 分钟, 设备切换, USB 重连, 锁屏和手动双向传输. 隐私预览下的系统授权未完成, 保留 in_progress 等待兼容性/人工授权复测. 原设置和两端剪贴板已恢复, 测试环境已清理. 详见 validation.md. 2026-10-22: 复测确认 macOS 27.0.1 隐私预览本身不显示授权界面, 最小 AppKit 探针同样无限等待, 本机无法完成授权复测, 非应用缺陷; 恢复默认后新包 916 ms 推送成功.",
   "meta": {}
 }
