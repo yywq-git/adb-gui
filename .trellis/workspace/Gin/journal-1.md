@@ -19,24 +19,33 @@ Fixed Android 17 lock-state checks, development Logcat performance-record memory
 
 ### Main Changes
 
-(Add details)
+- Replaced KeyguardManager bootstrap with fail-closed Binder lock-state checks, added JVM tests, and regenerated the shared DEX.
+- Replaced the full Logcat render array prop with an item count and accessor, preserving FIFO refreshes and StrictMode while bounding React development performance details.
+- Added fixed-height and wrapped-row memory regression coverage; corrected Windows browser launch and catalog path handling.
+- Updated task validation records and retained the outstanding macOS privacy authorization requirement.
 
 ### Git Commits
 
 | Hash | Message |
 |------|---------|
-| `640635d` | (see git log) |
-| `60357d9` | (see git log) |
-| `d03a71f` | (see git log) |
+| `640635d` | fix(clipboard): support Android 17 lock-state checks |
+| `60357d9` | fix(logcat): bound development performance payloads |
+| `d03a71f` | test(i18n): normalize catalog paths on Windows |
 
 ### Testing
 
-- [OK] (Add test results)
+- Frontend: 637 tests; browser: 42 scenarios; TypeScript/Vite build passed.
+- Rust: 169 tests, formatting and clippy passed; Java lock-state tests passed.
+- Android 16 wireless device and Android 17 emulator clipboard transfer passed; locked writes were rejected and did not appear after unlocking.
+- Logcat performance detail payload over 40 updates dropped from 23,208,900 bytes to 8,880 bytes.
+- Final native development run lasted about 20 minutes without OOM; final renderer memory was 385 MB. Log pause/resume and wireless mirroring stop/restart passed.
+- Test processes and ports were cleaned. QA logs remain because earlier automatic review rejected temporary-directory deletion.
 
 ### Status
 
-[OK] **Completed**
+Windows/Android fixes and this regression session are complete. The clipboard task remains **in_progress** because macOS privacy authorization validation is still pending.
 
 ### Next Steps
 
-- None - task complete
+- Push the committed repair branch to the configured fork.
+- Complete macOS privacy authorization validation in a suitable environment before closing the clipboard task.
