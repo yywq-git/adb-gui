@@ -21,6 +21,14 @@
   "children": [],
   "parent": null,
   "relatedFiles": [],
-  "notes": "2026-10-21: macOS + Redmi K70 常规验收通过, 覆盖后台 5 分钟, 设备切换, USB 重连, 锁屏和手动双向传输. 隐私预览下的系统授权未完成, 保留 in_progress 等待兼容性/人工授权复测. 原设置和两端剪贴板已恢复, 测试环境已清理. 详见 validation.md. 2026-10-22: 复测确认 macOS 27.0.1 隐私预览本身不显示授权界面, 最小 AppKit 探针同样无限等待, 本机无法完成授权复测, 非应用缺陷; 恢复默认后新包 916 ms 推送成功.",
-  "meta": {}
+  "notes": "2026-10-21: macOS + Redmi K70 常规验收通过, 覆盖后台 5 分钟, 设备切换, USB 重连, 锁屏和手动双向传输. 隐私预览下的系统授权未完成, 保留 in_progress 等待兼容性/人工授权复测. 原设置和两端剪贴板已恢复, 测试环境已清理. 详见 validation.md. 2026-10-22: 复测确认 macOS 27.0.1 隐私预览本身不显示授权界面, 最小 AppKit 探针同样无限等待, 本机无法完成授权复测, 非应用缺陷; 恢复默认后新包 916 ms 推送成功. 2026-10-25: 已修复 Android 17 API 37 r08 的 KeyguardManager 初始化兼容性问题并重建共用 DEX, 也修复 Windows i18n 测试路径分隔符缺陷. Windows + Android 16 无线真机自动/双向手动剪贴板、锁屏拒绝及解锁后未写入、Android 17 模拟器传输通过. 前端 637/637、Rust 169/169、Java lock-state 测试及构建/格式/clippy 通过. 随后在开发环境定位并修复 Logcat 大数组 props 导致 React 性能记录膨胀: 40 次更新由 23.2 MB 降至 8.9 KB, StrictMode 保留. 新增固定/换行开发回归, 前端 637 项与浏览器 42 场景通过; 无线投屏停止/重启已补验. 另修复 Windows 浏览器测试启动脚本. 保留 in_progress. 两端剪贴板已恢复验证, 测试进程/端口已清理; 临时目录因前序自动审批拒绝删除而保留. 详见 validation.md 最新小节. 修复已提交: 640635d (Android 17), 60357d9 (Logcat/开发回归), d03a71f (Windows i18n); 推送目标为 fork/codex/fix-clipboard-android17. 开发修复最终实例连续约 20 分钟, renderer 最后 385 MB、无 OOM, 日志暂停/恢复通过; 所有本轮进程及测试端口已清理.",
+  "meta": {
+    "windows_fix_branch": "codex/fix-clipboard-android17",
+    "windows_fix_commits": [
+      "640635d",
+      "60357d9",
+      "d03a71f"
+    ],
+    "windows_fix_remote": "fork"
+  }
 }
