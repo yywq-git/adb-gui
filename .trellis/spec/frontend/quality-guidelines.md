@@ -42,6 +42,9 @@
 
 新增或修改解析、校验、状态转换时必须增加回归测试. Canvas、虚拟滚动、dialog 焦点和键盘交互等浏览器行为需要真实 UI 冒烟测试, 不能只以 build 通过替代.
 
+- Streaming memory checks must include the real development renderer and native WebView process memory, not only production bundles, store capacity, DOM counts, or garbage-collected JavaScript heap size. Retained User Timing payloads can consume native memory while those other counts stay bounded. See `component-guidelines.md` for the Logcat accessor and performance-payload regression.
+- The shared screenshot/smoke Vite launcher uses `process.execPath` with `node_modules/vite/bin/vite.js`, not the platform-specific `.bin/vite` shell shim. Bind and navigate to the same explicit `127.0.0.1` loopback address, handle child `error` events, and hide console windows on Windows.
+
 ---
 
 ## Scenario: macOS Tauri Bundle UI Smoke Launch
