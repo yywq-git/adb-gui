@@ -85,3 +85,12 @@ Windows release QA for the available environment is recorded. The clipboard task
 
 - Keep these commits local as requested; do not archive the incomplete clipboard task.
 - Complete the explicitly untested hardware/platform checks when the required cable, devices and environments are available.
+
+### Same-evening Windows USB follow-up
+
+- User supplied and authorized USB serial `275179f2`; tested the actual NSIS-installed 0.1.11 release using a fresh isolated WebView profile.
+- A preliminary offline state recovered after one targeted ADB reconnect; this was recorded separately from the subsequent physical unplug/replug evidence.
+- User physically unplugged the cable: device list became empty, mirroring/device stream/Logcat processes ended, and Start mirroring was disabled. After the user plugged it back in, the same device returned online automatically with a new transport ID. Manually restarting mirroring displayed real video; clicking Logcat Reconnect restored live collection.
+- Closing the app with active USB mirroring and logs removed all test processes and CDP. NSIS uninstall exited 0. All 10 original 0.1.10 files, both shortcuts and both registry snapshots were restored with matching hashes; 5037/9223 were closed after stopping the test ADB server.
+- No product-source changes or new clipboard reads/writes. Auto push and scrcpy clipboard autosync were disabled; previous host clipboard restoration failure remains unchanged. USB reconnect stale-copy behavior was not retested. Physical WiFi loss, two physical devices, Linux, independent topmost/audio effects and macOS privacy-preview authorization remain pending.
+- `dde9b7f` — `docs: verify Windows USB physical reconnect`. Followed the user's existing approval to commit QA records locally without pushing. Task remains in_progress; USB temporary backups/profile are retained.
