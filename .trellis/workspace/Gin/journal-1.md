@@ -49,3 +49,39 @@ Windows/Android fixes and this regression session are complete. The clipboard ta
 
 - Push the committed repair branch to the configured fork.
 - Complete macOS privacy authorization validation in a suitable environment before closing the clipboard task.
+
+
+## Session 2: Windows release installers and native QA completion
+
+**Date**: 2026-10-26
+**Task**: Windows release installers and native QA completion
+**Branch**: `codex/fix-clipboard-android17`
+
+### Summary
+
+Validated actual NSIS/MSI 0.1.11 installation, launch and removal; lock-screen UI in both languages, no replay after unlock and 761 ms new-copy recovery; phone plus emulator mirroring, presets/options/transport reconnect. Restored original 0.1.10 files and shortcuts with full hash comparison. Device clipboard restored, but host clipboard snapshot was lost after the test controller reset; user informed and writes stopped. Test processes, ports and remote probes cleaned. Old temp deletion remains blocked; USB, physical WiFi, two physical devices, Linux and macOS privacy-preview validation remain open. No product source edits; QA records and recovery safeguards updated.
+
+### Main Changes
+
+- Recorded actual NSIS/MSI installation, launch and removal, including MSI administrator requirements and AppSearch reusing the prior install directory.
+- Completed release lock-screen UI and additional Windows mirroring evidence; kept physical USB/WiFi, second physical device, Linux and independent topmost/audio measurements explicitly pending.
+- Added clipboard recovery safeguards after the controller reset lost the host clipboard snapshot; device ClipData was restored, but host restoration failed and the user was informed.
+
+### Git Commits
+
+- `9fde7a6` — `docs: record Windows release QA and recovery safeguards`. Product source is unchanged; the user authorized documentation/journal commits without pushing.
+
+### Testing
+
+- Frontend: 61 files / 637 tests passed; TypeScript/Vite and NSIS/MSI release builds passed. Prior Rust/Java/browser results were not rerun this session.
+- Both installed packages launched and mirrored the wireless phone. MSI removal success was confirmed by MsiInstaller events; a repeated uninstall returned 1605 after removal.
+- All 10 original 0.1.10 files and both restored shortcuts matched backup hashes. Test processes, ports and remote DEX probes were cleaned. Documentation links and `git diff --check` passed.
+
+### Status
+
+Windows release QA for the available environment is recorded. The clipboard task remains **in_progress** for macOS privacy-preview authorization. Host clipboard restoration failed; old QA directory removal remains blocked by automatic approval review. New QA logs and installation backups are retained.
+
+### Next Steps
+
+- Keep these commits local as requested; do not archive the incomplete clipboard task.
+- Complete the explicitly untested hardware/platform checks when the required cable, devices and environments are available.
