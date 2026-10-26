@@ -44,6 +44,8 @@
 
 - Streaming memory checks must include the real development renderer and native WebView process memory, not only production bundles, store capacity, DOM counts, or garbage-collected JavaScript heap size. Retained User Timing payloads can consume native memory while those other counts stay bounded. See `component-guidelines.md` for the Logcat accessor and performance-payload regression.
 - The shared screenshot/smoke Vite launcher uses `process.execPath` with `node_modules/vite/bin/vite.js`, not the platform-specific `.bin/vite` shell shim. Bind and navigate to the same explicit `127.0.0.1` loopback address, handle child `error` events, and hide console windows on Windows.
+- Windows release acceptance must launch the actual NSIS/MSI-installed executable and record install/launch/uninstall evidence, not substitute a debug Rust shell with production frontend. Record the effective install directory: MSI AppSearch can reuse a prior registry path despite a command-line `INSTALLDIR`. Separate unsigned QA builds from signed updater validation.
+- Keep device evidence precise: `adb disconnect/connect` covers transport loss, not physical WiFi interruption; phone + emulator is not two physical phones; a forwarded scrcpy flag is not an independent check of its visible/audio effect. Document CDP automation and isolated profiles when native window control cannot complete the test; close debugging listeners at exit.
 
 ---
 

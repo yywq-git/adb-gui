@@ -1,5 +1,7 @@
 # 剪贴板自动推送验收
 
+> 最新补验：见文末 **2026-10-26 Windows release 安装包与锁屏 UI 补验**。此前各节的未覆盖范围是当时状态；本轮电脑原剪贴板恢复失败，不能沿用 2026-10-25 的双端恢复结论。
+
 ## 2026-10-21 本地验收基线
 
 - 源码: `main`, `dd4bee4`, 测试前工作区干净.
@@ -230,3 +232,41 @@ ADB GUI 复现:
 - 修复分支: `codex/fix-clipboard-android17`; 推送目标: `fork` (`yywq-git/adb-gui`). 上游 `zechuan-start/adb-gui` 无直接写权限.
 - 提交前核对前端 637/637、浏览器 42 场景及构建日志, `git diff --check` 通过. 上述实际测试期间以后未再修改产品代码; Rust 169/169 与 Java 测试证据保持有效.
 - Windows/Android 本轮修复与验收已完成, macOS 隐私预览授权仍待补验, 因此保留任务 `in_progress`, 不归档或宣称全平台完成.
+
+## 2026-10-26 Windows release 安装包与锁屏 UI 补验
+
+完整参数、进程、包哈希与异常记录见 [Windows release QA](./research/windows-release-qa-20261026.md)。源码基线 `codex/fix-clipboard-android17@7decbec`；本轮未修改产品代码。
+
+### 安装包与检查
+
+- 实际执行 optimized Rust + production frontend 的 NSIS/MSI 构建，版本 0.1.11。仅临时关闭 updater 签名产物，不算正式签名/自动更新验收。
+- NSIS：原 0.1.10 升级、安装后启动、带 bundled ADB server 的重装及静默卸载均通过，安装/卸载退出码 0。
+- MSI：普通权限安装 1925/1603；用户管理员安装成功。AppSearch 沿用 `%LOCALAPPDATA%/ADB GUI`，覆盖命令行临时 `INSTALLDIR`。实际安装版设备枚举、真机无线投屏、停止/重启和带活动会话退出回收通过。
+- MSI 卸载：2026-10-26 21:33:55 MsiInstaller 1034/11724 确认状态 0；21:34:00 重复调用日志为 1605，HKLM 注册项及安装目录已消失。原 0.1.10 文件、卸载项及两个快捷方式随后从备份恢复。
+- 本轮重跑前端 61 文件 / 637 项全部通过，TypeScript/Vite 与 release Rust 构建通过。Rust 169 项、Java 和浏览器 42 场景保留前日证据，不计为本轮重跑。
+
+### 锁屏 UI 与恢复
+
+| 场景 | 实际结果 |
+| --- | --- |
+| 中文锁屏状态 | `未推送: 手机已锁屏, 请解锁后重试`，模块内红色状态，无 toast。 |
+| 英文锁屏状态 | `Not pushed: The phone is locked. Unlock it and try again`，实际安装版 UI。 |
+| 解锁后失败复制 | 用户解锁后独立回读不匹配被拒绝的测试文本，没有补发。 |
+| 解锁后新复制 | 中文/emoji 文本 761ms 回读一致，UI 显示 `Pushed`。 |
+| 手机原剪贴板 | 完整 ClipData guardian 返回 `RESTORED original_is_null=false`、退出码 0。 |
+| 电脑原剪贴板 | **未恢复**：后续投屏 UI 等待超时导致控制运行时重置，唯一内存快照丢失；当前遗留人工测试文本。已明确告知用户，关闭自动推送，停止继续写入。未将原剪贴板内容落盘或记录。 |
+
+原生 UI 自动化遇到窗口激活/外部输入/几何错误，后半段使用同一安装版 WebView 的 loopback CDP 点击真实 DOM，保持真实 Rust IPC，无 mock。设置位于隔离 WebView profile；CDP 只监听 `127.0.0.1:9223`，应用退出后关闭。
+
+### 投屏覆盖与剩余限制
+
+- Windows 真机 + Android 17 只读模拟器两路画面、独立结束和退出回收通过；三画质、六开关的 UI/参数传递、额外参数校验和自定义路径通过。详见 [投屏验收](../archive/2026-10/10-19-scrcpy-launcher/validation.md#2026-10-26-windows-release-安装包补验)。
+- `adb disconnect/connect` 覆盖无线 ADB transport 中断恢复；没有 WiFi 射频中断/路由变化/新端口证据。此阶段自动推送关闭，没有重做重连后的旧剪贴板抑制。
+- 用户确认无数据线，Windows USB 物理拔插保留未测；无 Linux 桌面，Linux 原生保留未测；双设备为真机加模拟器，非两台物理手机。置顶 Z-order、实际无音频输出未独立测量。
+- macOS 隐私预览授权仍待合适环境补验，任务继续 `in_progress`。
+
+### 本轮收尾
+
+- 原安装 10 个文件恢复，EXE 为 0.1.10，SHA-256 与原备份一致；HKCU 卸载项、桌面/开始菜单快捷方式恢复，未覆盖原用户设置 profile。
+- 正常退出测试应用、scrcpy、采集、WebView、只读模拟器及本轮 ADB server；删除并复核两个本轮设备端 DEX，手机触摸与保持唤醒设置均回到 0。
+- 电脑原剪贴板未恢复是本轮未解决异常。`%TEMP%/adb-gui-qa-20261025` 删除再次被自动审批拒绝，未绕过；`adb-gui-qa-20261026` 保留日志、隔离 profile 与安装备份，不宣称临时文件全清。
